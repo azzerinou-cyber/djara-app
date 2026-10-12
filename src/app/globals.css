@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+:root {
+  --prune: #59364A;
+  --terracotta: #C77D69;
+  --ivoire: #FAF7F2;
+  --sauge: #A8B5A2;
+  --anthracite: #292929;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #FAF7F2;
+  color: #292929;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Boutons */
+.btn-primary {
+  background-color: #59364A;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(89,54,74,0.3);
+}
+.btn-primary:hover { background-color: #4a2d3d; }
+
+.btn-secondary {
+  background-color: #C77D69;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-secondary:hover { background-color: #b36d5a; }
+
+.btn-outline {
+  background-color: transparent;
+  color: #59364A;
+  border: 2px solid #59364A;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-outline:hover { background-color: #59364A; color: white; }
+
+/* Cartes */
+.card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  border: 1px solid #f0f0f0;
+  padding: 16px;
+  transition: box-shadow 0.2s;
+}
+.card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+.card-flat {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+}
+
+/* Champ de saisie */
+.input-field {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  font-size: 14px;
+  color: #292929;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input-field:focus { border-color: #59364A; box-shadow: 0 0 0 2px rgba(89,54,74,0.15); }
+
+/* Badges */
+.badge-verified {
+  background-color: #A8B5A2;
+  color: white;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-weight: 500;
+}
+
+/* Titres */
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #292929;
+  margin-bottom: 16px;
+}
+
+/* Navigation */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px 16px 16px;
+  z-index: 50;
+}
+
+.screen {
+  min-height: 100vh;
+  background-color: #FAF7F2;
+  padding-bottom: 80px;
+}
+
+.header {
+  background: white;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
