@@ -1,174 +1,191 @@
 'use client';
 import { useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
+type Step = 'phone' | 'otp' | 'profile';
 type Lang = 'fr' | 'ar';
 
-const T = {
+const t = {
   fr: {
-    tagline: 'Le talent des femmes, tout près de vous',
-    createAccount: 'Créer mon compte',
-    joinDjara: 'Rejoindre DJARA',
-    firstName: 'Prénom ou pseudonyme',
+    title: 'Rejoindre DJARA',
+    subtitle: 'La communauté des femmes talents',
     phone: 'Numéro de téléphone',
-    phonePlaceholder: '0555 000 000',
-    wilaya: 'Wilaya',
-    selectWilaya: 'Sélectionner votre wilaya',
-    password: 'Mot de passe',
-    passwordPlaceholder: 'Minimum 8 caractères',
-    signUp: "S'inscrire",
-    alreadyAccount: 'Déjà un compte ?',
-    login: 'Se connecter',
-    acceptTerms: "En continuant, j'accepte les",
-    terms: "conditions d'utilisation",
-    and: 'et la',
-    privacy: 'politique de confidentialité',
-    verifyPhone: 'Vérifier votre numéro',
-    otpSent: 'Un code a été envoyé au',
+    phonePlaceholder: '0555 123 456',
+    sendOtp: 'Recevoir le code',
+    otpTitle: 'Code de vérification',
+    otpSubtitle: 'Entrez le code reçu par SMS',
+    otpPlaceholder: '000000',
     verify: 'Vérifier',
-    resendCode: 'Renvoyer le code',
-    resendIn: 'Renvoyer dans',
-    seconds: 's',
+    profileTitle: 'Votre profil',
+    name: 'Prénom ou pseudonyme',
+    namePlaceholder: 'Amina',
+    wilaya: 'Wilaya',
+    commune: 'Commune',
+    finish: 'Créer mon compte',
+    loading: 'Chargement...',
+    back: '← Retour',
+    already: 'Déjà membre ?',
+    login: 'Se connecter',
+    step1: 'Téléphone',
+    step2: 'Vérification',
+    step3: 'Profil',
   },
   ar: {
-    tagline: 'موهبة المرأة، قريبة منك',
-    createAccount: 'إنشاء حسابي',
-    joinDjara: 'انضمي إلى جارة',
-    firstName: 'الاسم أو اللقب',
+    title: 'انضمي إلى جارة',
+    subtitle: 'مجتمع النساء الموهوبات',
     phone: 'رقم الهاتف',
-    phonePlaceholder: '0555 000 000',
+    phonePlaceholder: '0555 123 456',
+    sendOtp: 'استلام الرمز',
+    otpTitle: 'رمز التحقق',
+    otpSubtitle: 'أدخلي الرمز المستلم عبر SMS',
+    otpPlaceholder: '000000',
+    verify: 'تحقق',
+    profileTitle: 'ملفك الشخصي',
+    name: 'الاسم أو الاسم المستعار',
+    namePlaceholder: 'أمينة',
     wilaya: 'الولاية',
-    selectWilaya: 'اختاري ولايتك',
-    password: 'كلمة المرور',
-    passwordPlaceholder: '8 أحرف على الأقل',
-    signUp: 'إنشاء الحساب',
-    alreadyAccount: 'لديك حساب؟',
+    commune: 'البلدية',
+    finish: 'إنشاء حسابي',
+    loading: 'جاري التحميل...',
+    back: 'رجوع →',
+    already: 'عضوة بالفعل؟',
     login: 'تسجيل الدخول',
-    acceptTerms: 'بالمتابعة، أوافق على',
-    terms: 'شروط الاستخدام',
-    and: 'و',
-    privacy: 'سياسة الخصوصية',
-    verifyPhone: 'تأكيد رقم هاتفك',
-    otpSent: 'تم إرسال رمز إلى',
-    verify: 'تأكيد',
-    resendCode: 'إعادة إرسال الرمز',
-    resendIn: 'إعادة الإرسال خلال',
-    seconds: 'ث',
-  }
+    step1: 'الهاتف',
+    step2: 'التحقق',
+    step3: 'الملف',
+  },
 };
 
 const wilayas = [
-  '01 - Adrar','02 - Chlef','03 - Laghouat','04 - Oum El Bouaghi',
-  '05 - Batna','06 - Béjaïa','07 - Biskra','08 - Béchar',
-  '09 - Blida','10 - Bouira','16 - Alger','25 - Constantine','31 - Oran',
+  'Adrar','Chlef','Laghouat','Oum El Bouaghi','Batna','Béjaïa','Biskra',
+  'Béchar','Blida','Bouira','Tamanrasset','Tébessa','Tlemcen','Tiaret',
+  'Tizi Ouzou','Alger','Djelfa','Jijel','Sétif','Saïda','Skikda',
+  'Sidi Bel Abbès','Annaba','Guelma','Constantine','Médéa','Mostaganem',
+  "M'Sila",'Mascara','Ouargla','Oran','El Bayadh','Illizi','Bordj Bou Arréridj',
+  'Boumerdès','El Tarf','Tindouf','Tissemsilt','El Oued','Khenchela',
+  'Souk Ahras','Tipaza','Mila','Aïn Defla','Naâma','Aïn Témouchent',
+  'Ghardaïa','Relizane',
 ];
 
-export default function Inscription() {
+export default function InscriptionPage() {
   const [lang, setLang] = useState<Lang>('fr');
-  const [step, setStep] = useState<'form' | 'otp'>('form');
-  const [form, setForm] = useState({ firstName: '', phone: '', wilaya: '', password: '' });
-  const [countdown, setCountdown] = useState(0);
-  const tr = T[lang];
+  const [step, setStep] = useState<Step>('phone');
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [wilaya, setWilaya] = useState('');
+  const [commune, setCommune] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
   const isRTL = lang === 'ar';
+  const text = t[lang];
 
-  const startCountdown = () => {
-    setCountdown(60);
-    const interval = setInterval(() => {
-      setCountdown(p => { if (p <= 1) { clearInterval(interval); return 0; } return p - 1; });
-    }, 1000);
+  const handleSendOtp = async () => {
+    if (!phone.trim()) return;
+    setLoading(true); setError('');
+    try {
+      const fp = phone.startsWith('0') ? '+213' + phone.slice(1) : phone;
+      const { error } = await supabase.auth.signInWithOtp({ phone: fp });
+      if (error) throw error;
+      setStep('otp');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur d'envoi du code");
+    } finally { setLoading(false); }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setStep('otp');
-    startCountdown();
+  const handleVerifyOtp = async () => {
+    if (!otp.trim()) return;
+    setLoading(true); setError('');
+    try {
+      const fp = phone.startsWith('0') ? '+213' + phone.slice(1) : phone;
+      const { error } = await supabase.auth.verifyOtp({ phone: fp, token: otp, type: 'sms' });
+      if (error) throw error;
+      setStep('profile');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Code incorrect');
+    } finally { setLoading(false); }
   };
+
+  const handleCreateProfile = async () => {
+    if (!displayName.trim()) return;
+    setLoading(true); setError('');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Session expirée');
+      const { error } = await supabase.from('profiles').upsert({
+        id: user.id, display_name: displayName, wilaya, commune, phone, trust_level: 1,
+      });
+      if (error) throw error;
+      window.location.href = '/';
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erreur création profil');
+    } finally { setLoading(false); }
+  };
+
+  const steps = [text.step1, text.step2, text.step3];
+  const si = step === 'phone' ? 0 : step === 'otp' ? 1 : 2;
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'linear-gradient(160deg, #59364A 0%, #7a4d65 40%, #FAF7F2 100%)' }}>
-
-      {/* Switcher langue */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 16px 0' }}>
-        {(['fr', 'ar'] as Lang[]).map(l => (
-          <button key={l} onClick={() => setLang(l)} style={{ background: lang === l ? 'white' : 'rgba(255,255,255,0.2)', color: lang === l ? '#59364A' : 'white', border: 'none', padding: '6px 14px', borderRadius: 9999, fontSize: 13, fontWeight: 600, cursor: 'pointer', marginLeft: 8 }}>
-            {l.toUpperCase()}
-          </button>
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{minHeight:'100vh',background:'linear-gradient(135deg,#59364A 0%,#7a4a65 50%,#C77D69 100%)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'20px',fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif'}}>
+      <div style={{position:'absolute',top:20,right:20,display:'flex',gap:8}}>
+        {(['fr','ar'] as Lang[]).map(l=>(
+          <button key={l} onClick={()=>setLang(l)} style={{padding:'6px 14px',borderRadius:20,border:'none',background:lang===l?'white':'rgba(255,255,255,0.3)',color:lang===l?'#59364A':'white',fontWeight:600,cursor:'pointer',fontSize:13}}>{l==='fr'?'FR':'ع'}</button>
         ))}
       </div>
-
-      {/* Logo */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 0 32px' }}>
-        <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-          <span style={{ fontSize: 36 }}>🌸</span>
-        </div>
-        <h1 style={{ color: 'white', fontSize: 34, fontWeight: 800, margin: 0 }}>DJARA</h1>
-        <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 6 }}>{tr.tagline}</p>
+      <div style={{textAlign:'center',marginBottom:32}}>
+        <div style={{fontSize:48,marginBottom:8}}>🌸</div>
+        <h1 style={{color:'white',fontSize:28,fontWeight:700,margin:0}}>DJARA</h1>
+        <p style={{color:'rgba(255,255,255,0.8)',fontSize:14,margin:'4px 0 0'}}>{text.subtitle}</p>
       </div>
-
-      {/* Carte blanche */}
-      <div style={{ background: 'white', borderRadius: '28px 28px 0 0', flex: 1, padding: '32px 24px' }}>
-
-        {step === 'form' ? (
-          <>
-            <h2 style={{ fontSize: 22, fontWeight: 700, color: '#292929', margin: '0 0 4px' }}>{tr.createAccount}</h2>
-            <p style={{ fontSize: 13, color: '#999', margin: '0 0 24px' }}>{tr.joinDjara}</p>
-
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {[
-                { label: tr.firstName, key: 'firstName', type: 'text', placeholder: tr.firstName },
-                { label: tr.phone, key: 'phone', type: 'tel', placeholder: tr.phonePlaceholder },
-                { label: tr.password, key: 'password', type: 'password', placeholder: tr.passwordPlaceholder },
-              ].map(field => (
-                <div key={field.key}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: '#59364A', display: 'block', marginBottom: 6 }}>{field.label}</label>
-                  <input className="input-field" type={field.type} placeholder={field.placeholder}
-                    value={form[field.key as keyof typeof form]}
-                    onChange={e => setForm({ ...form, [field.key]: e.target.value })} required />
-                </div>
-              ))}
-
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#59364A', display: 'block', marginBottom: 6 }}>{tr.wilaya}</label>
-                <select className="input-field" value={form.wilaya} onChange={e => setForm({ ...form, wilaya: e.target.value })} required>
-                  <option value="">{tr.selectWilaya}</option>
-                  {wilayas.map(w => <option key={w} value={w}>{w}</option>)}
-                </select>
+      <div style={{background:'white',borderRadius:24,padding:'32px 28px',width:'100%',maxWidth:400,boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+        <div style={{display:'flex',alignItems:'center',marginBottom:28}}>
+          {steps.map((s,i)=>(
+            <div key={i} style={{display:'flex',alignItems:'center',flex:1}}>
+              <div style={{display:'flex',flexDirection:'column',alignItems:'center',flex:1}}>
+                <div style={{width:28,height:28,borderRadius:'50%',background:i<=si?'#59364A':'#e5e7eb',color:i<=si?'white':'#9ca3af',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700}}>{i+1}</div>
+                <span style={{fontSize:10,color:i<=si?'#59364A':'#9ca3af',marginTop:4,fontWeight:500}}>{s}</span>
               </div>
-
-              <button type="submit" className="btn-primary" style={{ marginTop: 8, width: '100%', padding: 14 }}>
-                {tr.signUp}
-              </button>
-            </form>
-
-            <p style={{ textAlign: 'center', fontSize: 12, color: '#999', marginTop: 20 }}>
-              {tr.acceptTerms} <span style={{ color: '#59364A', fontWeight: 600 }}>{tr.terms}</span> {tr.and} <span style={{ color: '#59364A', fontWeight: 600 }}>{tr.privacy}</span>
-            </p>
-            <p style={{ textAlign: 'center', fontSize: 13, color: '#999', marginTop: 12 }}>
-              {tr.alreadyAccount} <span style={{ color: '#C77D69', fontWeight: 700, cursor: 'pointer' }}>{tr.login}</span>
-            </p>
-          </>
-        ) : (
-          <>
-            <button onClick={() => setStep('form')} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', color: '#59364A', marginBottom: 16 }}>←</button>
-            <h2 style={{ fontSize: 22, fontWeight: 700, color: '#292929', margin: '0 0 8px' }}>{tr.verifyPhone}</h2>
-            <p style={{ fontSize: 13, color: '#999', margin: '0 0 4px' }}>{tr.otpSent}</p>
-            <p style={{ fontSize: 16, fontWeight: 700, color: '#59364A', margin: '0 0 32px' }}>{form.phone}</p>
-
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 32 }}>
-              {[0,1,2,3,4,5].map(i => (
-                <input key={i} maxLength={1}
-                  style={{ width: 46, height: 54, borderRadius: 12, border: '2px solid #e5e7eb', textAlign: 'center', fontSize: 22, fontWeight: 700, color: '#59364A', outline: 'none' }}
-                  onChange={e => { if (e.target.value && e.target.nextElementSibling) (e.target.nextElementSibling as HTMLInputElement).focus(); }} />
-              ))}
+              {i<2&&<div style={{height:2,flex:1,background:i<si?'#59364A':'#e5e7eb',marginBottom:16}}/>}
             </div>
+          ))}
+        </div>
+        {error&&<div style={{background:'#fef2f2',border:'1px solid #fecaca',borderRadius:10,padding:'10px 14px',marginBottom:16,color:'#dc2626',fontSize:13}}>{error}</div>}
 
-            <button className="btn-primary" style={{ width: '100%', padding: 14 }}>{tr.verify}</button>
+        {step==='phone'&&(
+          <div>
+            <h2 style={{fontSize:20,fontWeight:700,color:'#292929',margin:'0 0 20px'}}>{text.title}</h2>
+            <label style={{fontSize:13,fontWeight:600,color:'#59364A',display:'block',marginBottom:6}}>{text.phone}</label>
+            <input type="tel" value={phone} onChange={e=>setPhone(e.target.value)} placeholder={text.phonePlaceholder} style={{width:'100%',padding:'13px 16px',borderRadius:12,border:'2px solid #e5e7eb',fontSize:16,outline:'none',boxSizing:'border-box',marginBottom:20}}/>
+            <button onClick={handleSendOtp} disabled={loading||!phone.trim()} style={{width:'100%',padding:'14px',borderRadius:12,border:'none',background:phone.trim()?'#59364A':'#e5e7eb',color:phone.trim()?'white':'#9ca3af',fontWeight:700,fontSize:16,cursor:phone.trim()?'pointer':'not-allowed'}}>{loading?text.loading:text.sendOtp}</button>
+            <p style={{textAlign:'center',marginTop:20,fontSize:14,color:'#888'}}>{text.already} <a href="/auth/connexion" style={{color:'#59364A',fontWeight:700,textDecoration:'none'}}>{text.login}</a></p>
+          </div>
+        )}
 
-            <p style={{ textAlign: 'center', fontSize: 13, color: '#999', marginTop: 20 }}>
-              {countdown > 0
-                ? `${tr.resendIn} ${countdown}${tr.seconds}`
-                : <span style={{ color: '#C77D69', fontWeight: 600, cursor: 'pointer' }} onClick={startCountdown}>{tr.resendCode}</span>}
-            </p>
-          </>
+        {step==='otp'&&(
+          <div>
+            <h2 style={{fontSize:20,fontWeight:700,color:'#292929',margin:'0 0 6px'}}>{text.otpTitle}</h2>
+            <p style={{color:'#888',fontSize:14,margin:'0 0 24px'}}>{text.otpSubtitle}</p>
+            <input type="number" value={otp} onChange={e=>setOtp(e.target.value)} placeholder={text.otpPlaceholder} style={{width:'100%',padding:'13px 16px',borderRadius:12,border:'2px solid #e5e7eb',fontSize:24,letterSpacing:8,textAlign:'center',outline:'none',boxSizing:'border-box',marginBottom:20}}/>
+            <button onClick={handleVerifyOtp} disabled={loading||otp.length<4} style={{width:'100%',padding:'14px',borderRadius:12,border:'none',background:otp.length>=4?'#59364A':'#e5e7eb',color:otp.length>=4?'white':'#9ca3af',fontWeight:700,fontSize:16,cursor:otp.length>=4?'pointer':'not-allowed',marginBottom:12}}>{loading?text.loading:text.verify}</button>
+            <button onClick={()=>setStep('phone')} style={{width:'100%',padding:'12px',borderRadius:12,border:'2px solid #e5e7eb',background:'white',color:'#888',fontWeight:600,cursor:'pointer'}}>{text.back}</button>
+          </div>
+        )}
+
+        {step==='profile'&&(
+          <div>
+            <h2 style={{fontSize:20,fontWeight:700,color:'#292929',margin:'0 0 20px'}}>{text.profileTitle}</h2>
+            <label style={{fontSize:13,fontWeight:600,color:'#59364A',display:'block',marginBottom:6}}>{text.name}</label>
+            <input value={displayName} onChange={e=>setDisplayName(e.target.value)} placeholder={text.namePlaceholder} style={{width:'100%',padding:'13px 16px',borderRadius:12,border:'2px solid #e5e7eb',fontSize:15,outline:'none',boxSizing:'border-box',marginBottom:16}}/>
+            <label style={{fontSize:13,fontWeight:600,color:'#59364A',display:'block',marginBottom:6}}>{text.wilaya}</label>
+            <select value={wilaya} onChange={e=>setWilaya(e.target.value)} style={{width:'100%',padding:'13px 16px',borderRadius:12,border:'2px solid #e5e7eb',fontSize:15,outline:'none',boxSizing:'border-box',marginBottom:16,background:'white'}}>
+              <option value="">-- {text.wilaya} --</option>
+              {wilayas.map(w=><option key={w} value={w}>{w}</option>)}
+            </select>
+            <label style={{fontSize:13,fontWeight:600,color:'#59364A',display:'block',marginBottom:6}}>{text.commune}</label>
+            <input value={commune} onChange={e=>setCommune(e.target.value)} placeholder={text.commune} style={{width:'100%',padding:'13px 16px',borderRadius:12,border:'2px solid #e5e7eb',fontSize:15,outline:'none',boxSizing:'border-box',marginBottom:24}}/>
+            <button onClick={handleCreateProfile} disabled={loading||!displayName.trim()} style={{width:'100%',padding:'14px',borderRadius:12,border:'none',background:displayName.trim()?'linear-gradient(135deg,#59364A,#C77D69)':'#e5e7eb',color:displayName.trim()?'white':'#9ca3af',fontWeight:700,fontSize:16,cursor:displayName.trim()?'pointer':'not-allowed'}}>{loading?text.loading:text.finish}</button>
+          </div>
         )}
       </div>
     </div>
