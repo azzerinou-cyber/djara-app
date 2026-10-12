@@ -1,267 +1,332 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 
 type Lang = 'fr' | 'ar';
+type Etape = 1 | 2 | 3;
 
 const categories = [
-  { icon: '🏠', fr: 'Maison & Quotidien', ar: 'المنزل والحياة اليومية' },
-  { icon: '💄', fr: 'Beauté & Bien-être', ar: 'الجمال والعناية' },
-  { icon: '📚', fr: 'Éducation & Transmission', ar: 'التعليم والتدريس' },
-  { icon: '🎨', fr: 'Création & Artisanat', ar: 'الإبداع والحرف' },
-  { icon: '💻', fr: 'Digital & Entrepreneuriat', ar: 'الرقمي وريادة الأعمال' },
-  { icon: '🎉', fr: 'Événements', ar: 'الأحداث والمناسبات' },
+  { icon: '🍳', fr: 'Maison & Quotidien', ar: 'المنزل والحياة اليومية', sousCategories: { fr: ['Cuisine traditionnelle', 'Pâtisserie', 'Couture', 'Repassage', 'Organisation domicile', 'Aide ménagère'], ar: ['طبخ تقليدي', 'حلويات', 'خياطة', 'كي الملابس', 'تنظيم المنزل', 'مساعدة منزلية'] } },
+  { icon: '💄', fr: 'Beauté & Bien-être', ar: 'الجمال والعناية', sousCategories: { fr: ['Coiffure', 'Maquillage', 'Soins esthétiques', 'Henné', 'Onglerie'], ar: ['تصفيف شعر', 'مكياج', 'عناية بالجمال', 'حناء', 'تزيين أظافر'] } },
+  { icon: '📚', fr: 'Éducation', ar: 'التعليم', sousCategories: { fr: ['Soutien scolaire', 'Cours de langues', 'Initiation informatique', 'Accompagnement devoirs', 'Formation artisanale'], ar: ['دعم مدرسي', 'دروس لغات', 'إعلام آلي', 'مساعدة واجبات', 'تكوين حرفي'] } },
+  { icon: '🧵', fr: 'Création & Artisanat', ar: 'الإبداع والحرف', sousCategories: { fr: ['Broderie', 'Couture traditionnelle', 'Création vêtements', 'Décoration', 'Artisanat local'], ar: ['تطريز', 'خياطة تقليدية', 'تصميم ملابس', 'ديكور', 'حرف محلية'] } },
+  { icon: '💻', fr: 'Digital & Entrepreneuriat', ar: 'الرقمي والمقاولاتية', sousCategories: { fr: ['Community management', 'Création graphique', 'Assistance administrative', 'Sites internet', 'Photographie', 'Montage vidéo'], ar: ['إدارة مجتمعات', 'تصميم جرافيك', 'مساعدة إدارية', 'مواقع ويب', 'تصوير', 'مونتاج'] } },
+  { icon: '🎉', fr: 'Événements', ar: 'الفعاليات', sousCategories: { fr: ['Organisation fêtes', 'Décoration événements', 'Pâtisserie événementielle', 'Préparation cérémonies'], ar: ['تنظيم حفلات', 'ديكور فعاليات', 'حلويات مناسبات', 'تحضير مراسم'] } },
 ];
 
-const steps = ['category', 'details', 'location', 'preview'] as const;
-type Step = typeof steps[number];
+const wilayas = [
+  'Adrar','Chlef','Laghouat','Oum El Bouaghi','Batna','Béjaïa','Biskra','Béchar','Blida','Bouira',
+  'Tamanrasset','Tébessa','Tlemcen','Tiaret','Tizi Ouzou','Alger','Djelfa','Jijel','Sétif','Saïda',
+  'Skikda','Sidi Bel Abbès','Annaba','Guelma','Constantine','Médéa','Mostaganem','M\'Sila','Mascara',
+  'Ouargla','Oran','El Bayadh','Illizi','Bordj Bou Arréridj','Boumerdès','El Tarf','Tindouf',
+  'Tissemsilt','El Oued','Khenchela','Souk Ahras','Tipaza','Mila','Aïn Defla','Naâma',
+  'Aïn Témouchent','Ghardaïa','Relizane','Timimoun','Bordj Badji Mokhtar','Ouled Djellal',
+  'Béni Abbès','In Salah','In Guezzam','Touggourt','Djanet','El M\'Ghair','El Meniaa'
+];
 
-export default function Publier() {
+export default function PublierPage() {
   const [lang, setLang] = useState<Lang>('fr');
-  const [step, setStep] = useState<Step>('category');
-  const [selectedCat, setSelectedCat] = useState<number | null>(null);
-  const [form, setForm] = useState({ title: '', description: '', price: '', priceType: 'heure', availability: '' });
-  const [serviceType, setServiceType] = useState<string[]>([]);
   const isRTL = lang === 'ar';
+  const [etape, setEtape] = useState<Etape>(1);
+  const [catSelect, setCatSelect] = useState('');
+  const [sousCat, setSousCat] = useState('');
+  const [titre, setTitre] = useState('');
+  const [description, setDescription] = useState('');
+  const [tarifMin, setTarifMin] = useState('');
+  const [tarifMax, setTarifMax] = useState('');
+  const [tarifType, setTarifType] = useState<'heure' | 'prestation' | 'journee'>('prestation');
+  const [wilaya, setWilaya] = useState('Alger');
+  const [commune, setCommune] = useState('');
+  const [deplacement, setDeplacement] = useState(false);
+  const [distanceMax, setDistanceMax] = useState('10 km');
+  const [disponible, setDisponible] = useState(true);
+  const [submitted, setSubmitted] = useState(false);
 
-  const toggleType = (t: string) => setServiceType(prev =>
-    prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]
-  );
+  const catSelectObj = categories.find(c => c.icon === catSelect);
+  const canNext1 = catSelect && sousCat;
+  const canNext2 = titre.length >= 5 && description.length >= 20 && tarifMin;
+  const canSubmit = wilaya && commune.length >= 2;
 
-  const stepIndex = steps.indexOf(step);
-
-  const T = {
-    fr: {
-      title: 'Publier un service',
-      steps: ['Catégorie', 'Détails', 'Localisation', 'Aperçu'],
-      step1Title: 'Quelle est votre spécialité ?',
-      step1Sub: 'Choisissez la catégorie qui correspond le mieux à votre savoir-faire.',
-      next: 'Continuer',
-      back: 'Retour',
-      step2Title: 'Décrivez votre service',
-      titleLabel: 'Titre de votre service',
-      titlePh: 'Ex : Coiffure à domicile, tresses et lissage',
-      descLabel: 'Description',
-      descPh: 'Décrivez votre expérience, vos compétences et ce que vous proposez...',
-      priceLabel: 'Tarif indicatif',
-      pricePh: '1500',
-      priceTypes: ['heure', 'séance', 'prestation', 'kg', 'pièce'],
-      availLabel: 'Disponibilités',
-      availPh: 'Ex : Lundi au vendredi, 9h-18h',
-      step3Title: 'Votre zone de service',
-      step3Sub: 'Indiquez où vous proposez vos services.',
-      atHome: 'À domicile (chez la cliente)',
-      atMine: 'Chez moi',
-      remote: 'À distance',
-      step4Title: 'Aperçu de votre annonce',
-      step4Sub: 'Vérifiez avant de publier.',
-      publish: '🚀 Publier mon service',
-      publishSub: 'Votre annonce sera visible après vérification.',
-      priceLabel2: 'Tarif',
-      notice: '✅ Votre annonce sera examinée par notre équipe avant publication. Délai : 24h maximum.',
-      titleDefault: 'Titre de votre service',
-      descDefault: 'Votre description apparaîtra ici.',
-    },
-    ar: {
-      title: 'نشر خدمة',
-      steps: ['التصنيف', 'التفاصيل', 'الموقع', 'معاينة'],
-      step1Title: 'ما هو تخصصك؟',
-      step1Sub: 'اختاري الفئة التي تناسب مهارتك.',
-      next: 'متابعة',
-      back: 'رجوع',
-      step2Title: 'صفي خدمتك',
-      titleLabel: 'عنوان خدمتك',
-      titlePh: 'مثال: تصفيف شعر في المنزل',
-      descLabel: 'وصف الخدمة',
-      descPh: 'صفي تجربتك ومهاراتك وما تقدمينه...',
-      priceLabel: 'السعر التقريبي',
-      pricePh: '1500',
-      priceTypes: ['ساعة', 'جلسة', 'خدمة', 'كغ', 'قطعة'],
-      availLabel: 'أوقات التوفر',
-      availPh: 'مثال: الإثنين إلى الجمعة، 9ص-6م',
-      step3Title: 'منطقة الخدمة',
-      step3Sub: 'حددي أين تقدمين خدماتك.',
-      atHome: 'عند العميلة',
-      atMine: 'عندي في المنزل',
-      remote: 'عن بُعد',
-      step4Title: 'معاينة إعلانك',
-      step4Sub: 'تحققي قبل النشر.',
-      publish: '🚀 نشر خدمتي',
-      publishSub: 'سيكون إعلانك مرئياً بعد المراجعة.',
-      priceLabel2: 'السعر',
-      notice: '✅ سيتم مراجعة إعلانك من قِبل فريقنا قبل النشر. المدة: 24 ساعة كحد أقصى.',
-      titleDefault: 'عنوان خدمتك',
-      descDefault: 'وصفك سيظهر هنا.',
-    },
-  }[lang];
+  if (submitted) {
+    return (
+      <div dir={isRTL ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', background: '#FAF7F2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+        <div style={{ fontSize: 70, marginBottom: 16 }}>🌸</div>
+        <h2 style={{ color: '#59364A', fontSize: 22, fontWeight: 900, textAlign: 'center', margin: '0 0 12px' }}>
+          {lang === 'fr' ? 'Annonce publiée !' : 'تم النشر!'}
+        </h2>
+        <p style={{ color: '#666', fontSize: 14, textAlign: 'center', maxWidth: 300, margin: '0 0 24px' }}>
+          {lang === 'fr' ? 'Votre service est maintenant visible par les femmes de votre région.' : 'خدمتك أصبحت مرئية للنساء في منطقتك.'}
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 300 }}>
+          <Link href="/rechercher" style={{ background: '#59364A', color: '#FAF7F2', borderRadius: 25, padding: '14px', textAlign: 'center', textDecoration: 'none', fontWeight: 700, fontSize: 15 }}>
+            {lang === 'fr' ? '🔍 Voir les annonces' : '🔍 رؤية الإعلانات'}
+          </Link>
+          <button onClick={() => { setSubmitted(false); setEtape(1); setCatSelect(''); setSousCat(''); setTitre(''); setDescription(''); setTarifMin(''); setTarifMax(''); setCommune(''); }} style={{ background: '#fff', color: '#59364A', border: '2px solid #59364A', borderRadius: 25, padding: '14px', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
+            {lang === 'fr' ? '➕ Publier un autre service' : '➕ نشر خدمة أخرى'}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', background: '#FAF7F2', paddingBottom: 100 }}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', background: '#FAF7F2', fontFamily: "'Segoe UI', system-ui, sans-serif", paddingBottom: 80 }}>
 
-      <div style={{ background: 'white', padding: '16px', borderBottom: '1px solid #f0f0f0', position: 'sticky', top: 0, zIndex: 40 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#292929', margin: 0 }}>{T.title}</h1>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {(['fr', 'ar'] as Lang[]).map(l => (
-              <button key={l} onClick={() => setLang(l)}
-                style={{ background: lang === l ? '#59364A' : '#f5f5f5', color: lang === l ? 'white' : '#888', border: 'none', padding: '4px 10px', borderRadius: 9999, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
-                {l.toUpperCase()}
-              </button>
-            ))}
-          </div>
+      {/* Header */}
+      <header style={{ background: '#59364A', padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div>
+          <div style={{ color: '#FAF7F2', fontSize: 18, fontWeight: 900 }}>✨ {lang === 'fr' ? 'Proposer un service' : 'نشر خدمة'}</div>
+          <div style={{ color: 'rgba(250,247,242,0.6)', fontSize: 11 }}>{lang === 'fr' ? `Étape ${etape} sur 3` : `الخطوة ${etape} من 3`}</div>
         </div>
+        <button onClick={() => setLang(lang === 'fr' ? 'ar' : 'fr')} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FAF7F2', borderRadius: 20, padding: '6px 14px', cursor: 'pointer', fontSize: 12 }}>
+          {lang === 'fr' ? 'عربي' : 'FR'}
+        </button>
+      </header>
 
-        <div style={{ display: 'flex', gap: 4 }}>
-          {steps.map((s, i) => (
-            <div key={s} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-              <div style={{ height: 4, width: '100%', borderRadius: 9999, background: i <= stepIndex ? '#59364A' : '#e5e7eb', transition: 'all 0.3s' }} />
-              <span style={{ fontSize: 10, color: i <= stepIndex ? '#59364A' : '#aaa', fontWeight: i === stepIndex ? 700 : 400 }}>{T.steps[i]}</span>
-            </div>
-          ))}
-        </div>
+      {/* Barre de progression */}
+      <div style={{ background: '#fff', height: 6, boxShadow: '0 2px 4px rgba(89,54,74,0.06)' }}>
+        <div style={{ height: '100%', background: 'linear-gradient(90deg, #59364A, #C77D69)', width: `${(etape / 3) * 100}%`, transition: 'width 0.4s ease', borderRadius: '0 4px 4px 0' }} />
       </div>
 
-      <div style={{ padding: 16 }}>
+      <div style={{ padding: '20px' }}>
 
-        {step === 'category' && (
+        {/* ══ ÉTAPE 1 — Catégorie ══ */}
+        {etape === 1 && (
           <div>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#292929', margin: '0 0 6px' }}>{T.step1Title}</h2>
-            <p style={{ fontSize: 13, color: '#888', margin: '0 0 20px' }}>{T.step1Sub}</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {categories.map((cat, i) => (
-                <button key={i} onClick={() => setSelectedCat(i)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px', borderRadius: 14, border: '2px solid', borderColor: selectedCat === i ? '#59364A' : '#e5e7eb', background: selectedCat === i ? 'rgba(89,54,74,0.05)' : 'white', cursor: 'pointer', textAlign: isRTL ? 'right' : 'left', transition: 'all 0.2s', width: '100%' }}>
-                  <span style={{ fontSize: 28 }}>{cat.icon}</span>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: selectedCat === i ? '#59364A' : '#292929' }}>{isRTL ? cat.ar : cat.fr}</span>
-                  {selectedCat === i && <span style={{ marginLeft: 'auto', color: '#59364A', fontSize: 18 }}>✓</span>}
+            <h2 style={{ color: '#292929', fontSize: 20, fontWeight: 900, margin: '0 0 4px' }}>
+              {lang === 'fr' ? 'Quel service proposez-vous ?' : 'ما هي الخدمة التي تقدمينها؟'}
+            </h2>
+            <p style={{ color: '#999', fontSize: 13, margin: '0 0 20px' }}>
+              {lang === 'fr' ? 'Choisissez une catégorie puis une spécialité' : 'اختاري فئة ثم تخصصاً'}
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+              {categories.map(cat => (
+                <button key={cat.icon} onClick={() => { setCatSelect(cat.icon); setSousCat(''); }} style={{ background: catSelect === cat.icon ? '#59364A' : '#fff', border: '2px solid ' + (catSelect === cat.icon ? '#59364A' : '#e8ddd6'), borderRadius: 16, padding: '16px 12px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s' }}>
+                  <div style={{ fontSize: 28, marginBottom: 6 }}>{cat.icon}</div>
+                  <div style={{ color: catSelect === cat.icon ? '#FAF7F2' : '#292929', fontSize: 11, fontWeight: 700, lineHeight: 1.3 }}>
+                    {lang === 'fr' ? cat.fr : cat.ar}
+                  </div>
                 </button>
               ))}
+            </div>
+
+            {catSelectObj && (
+              <div style={{ background: '#fff', borderRadius: 16, padding: '16px', marginBottom: 20 }}>
+                <div style={{ color: '#59364A', fontWeight: 700, fontSize: 14, marginBottom: 12 }}>
+                  {lang === 'fr' ? 'Choisissez votre spécialité :' : 'اختاري تخصصك:'}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {(lang === 'fr' ? catSelectObj.sousCategories.fr : catSelectObj.sousCategories.ar).map((sc, i) => (
+                    <button key={i} onClick={() => setSousCat(sc)} style={{ padding: '8px 14px', borderRadius: 20, border: '2px solid ' + (sousCat === sc ? '#C77D69' : '#e8ddd6'), background: sousCat === sc ? '#C77D69' : '#FAF7F2', color: sousCat === sc ? '#fff' : '#292929', fontSize: 13, cursor: 'pointer', fontWeight: sousCat === sc ? 700 : 400 }}>
+                      {sc}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <button onClick={() => canNext1 && setEtape(2)} style={{ width: '100%', padding: '16px', background: canNext1 ? '#59364A' : '#ddd', color: '#FAF7F2', border: 'none', borderRadius: 25, fontSize: 16, fontWeight: 700, cursor: canNext1 ? 'pointer' : 'not-allowed' }}>
+              {lang === 'fr' ? 'Continuer →' : 'متابعة →'}
+            </button>
+          </div>
+        )}
+
+        {/* ══ ÉTAPE 2 — Détails ══ */}
+        {etape === 2 && (
+          <div>
+            <h2 style={{ color: '#292929', fontSize: 20, fontWeight: 900, margin: '0 0 4px' }}>
+              {lang === 'fr' ? 'Décrivez votre service' : 'صفي خدمتك'}
+            </h2>
+            <p style={{ color: '#999', fontSize: 13, margin: '0 0 20px' }}>
+              {lang === 'fr' ? 'Plus votre description est précise, plus vous attirerez de clientes' : 'كلما كان وصفك دقيقاً، جذبت أكثر'}
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ display: 'block', color: '#59364A', fontWeight: 700, fontSize: 13, marginBottom: 6 }}>
+                  {lang === 'fr' ? 'Titre de l\'annonce *' : 'عنوان الإعلان *'}
+                </label>
+                <input value={titre} onChange={e => setTitre(e.target.value)} maxLength={60}
+                  placeholder={lang === 'fr' ? 'Ex: Coiffure à domicile — spécialiste chignons' : 'مثال: تصفيف شعر في المنزل'}
+                  style={{ width: '100%', padding: '13px 16px', borderRadius: 16, border: '2px solid ' + (titre.length > 0 && titre.length < 5 ? '#e74c3c' : '#e8ddd6'), fontSize: 14, outline: 'none', color: '#292929', boxSizing: 'border-box', background: '#fff' }} />
+                <div style={{ color: '#999', fontSize: 11, marginTop: 4, textAlign: 'right' }}>{titre.length}/60</div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', color: '#59364A', fontWeight: 700, fontSize: 13, marginBottom: 6 }}>
+                  {lang === 'fr' ? 'Description détaillée *' : 'وصف تفصيلي *'}
+                </label>
+                <textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={500} rows={5}
+                  placeholder={lang === 'fr' ? 'Décrivez votre expérience, vos méthodes, ce qui vous rend unique...' : 'صفي تجربتك، أساليبك، ما يميزك...'}
+                  style={{ width: '100%', padding: '13px 16px', borderRadius: 16, border: '2px solid #e8ddd6', fontSize: 14, outline: 'none', color: '#292929', boxSizing: 'border-box', resize: 'none', fontFamily: 'inherit', background: '#fff' }} />
+                <div style={{ color: description.length < 20 ? '#e74c3c' : '#999', fontSize: 11, marginTop: 4, textAlign: 'right' }}>{description.length}/500 {description.length < 20 ? (lang === 'fr' ? '(20 min)' : '(20 حرف كحد أدنى)') : ''}</div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', color: '#59364A', fontWeight: 700, fontSize: 13, marginBottom: 8 }}>
+                  {lang === 'fr' ? 'Tarif *' : 'السعر *'}
+                </label>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+                  {(['prestation', 'heure', 'journee'] as const).map(t => (
+                    <button key={t} onClick={() => setTarifType(t)} style={{ flex: 1, padding: '8px', borderRadius: 12, border: '2px solid ' + (tarifType === t ? '#59364A' : '#e8ddd6'), background: tarifType === t ? '#59364A' : '#fff', color: tarifType === t ? '#FAF7F2' : '#666', fontSize: 12, cursor: 'pointer', fontWeight: tarifType === t ? 700 : 400 }}>
+                      {lang === 'fr' ? { prestation: 'Par prestation', heure: 'Par heure', journee: 'Par journée' }[t] : { prestation: 'للخدمة', heure: 'للساعة', journee: 'لليوم' }[t]}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input value={tarifMin} onChange={e => setTarifMin(e.target.value.replace(/\D/g, ''))} placeholder={lang === 'fr' ? 'Min (DA)' : 'الحد الأدنى'}
+                    style={{ flex: 1, padding: '12px 14px', borderRadius: 14, border: '2px solid #e8ddd6', fontSize: 14, outline: 'none', color: '#292929', background: '#fff' }} />
+                  <span style={{ color: '#999', fontSize: 18 }}>—</span>
+                  <input value={tarifMax} onChange={e => setTarifMax(e.target.value.replace(/\D/g, ''))} placeholder={lang === 'fr' ? 'Max (DA)' : 'الحد الأقصى (اختياري)'}
+                    style={{ flex: 1, padding: '12px 14px', borderRadius: 14, border: '2px solid #e8ddd6', fontSize: 14, outline: 'none', color: '#292929', background: '#fff' }} />
+                </div>
+                <div style={{ color: '#A8B5A2', fontSize: 11, marginTop: 6 }}>
+                  💡 {lang === 'fr' ? 'Le tarif maximum est optionnel. Soyez honnête pour attirer les bonnes clientes.' : 'السعر الأقصى اختياري. كوني صادقة لجذب العميلات المناسبات.'}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+              <button onClick={() => setEtape(1)} style={{ flex: 1, padding: '14px', background: '#fff', color: '#59364A', border: '2px solid #59364A', borderRadius: 25, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
+                ← {lang === 'fr' ? 'Retour' : 'رجوع'}
+              </button>
+              <button onClick={() => canNext2 && setEtape(3)} style={{ flex: 2, padding: '14px', background: canNext2 ? '#59364A' : '#ddd', color: '#FAF7F2', border: 'none', borderRadius: 25, fontSize: 15, fontWeight: 700, cursor: canNext2 ? 'pointer' : 'not-allowed' }}>
+                {lang === 'fr' ? 'Continuer →' : 'متابعة →'}
+              </button>
             </div>
           </div>
         )}
 
-        {step === 'details' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#292929', margin: 0 }}>{T.step2Title}</h2>
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 6 }}>{T.titleLabel}</label>
-              <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
-                placeholder={T.titlePh} className="input-field" />
+        {/* ══ ÉTAPE 3 — Localisation ══ */}
+        {etape === 3 && (
+          <div>
+            <h2 style={{ color: '#292929', fontSize: 20, fontWeight: 900, margin: '0 0 4px' }}>
+              {lang === 'fr' ? 'Où exercez-vous ?' : 'أين تعملين؟'}
+            </h2>
+            <p style={{ color: '#999', fontSize: 13, margin: '0 0 4px' }}>
+              {lang === 'fr' ? 'Votre adresse exacte ne sera jamais affichée publiquement.' : 'عنوانك الدقيق لن يظهر للعموم أبداً.'}
+            </p>
+            <div style={{ background: '#e8f5e9', borderRadius: 12, padding: '10px 14px', marginBottom: 20, display: 'flex', gap: 8, alignItems: 'center' }}>
+              <span style={{ fontSize: 16 }}>🔒</span>
+              <span style={{ color: '#2e7d32', fontSize: 12, fontWeight: 600 }}>
+                {lang === 'fr' ? 'Seule votre commune sera visible. Votre sécurité est notre priorité.' : 'فقط بلديتك ستكون مرئية. أمانك هو أولويتنا.'}
+              </span>
             </div>
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 6 }}>{T.descLabel}</label>
-              <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
-                placeholder={T.descPh} rows={4}
-                style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: '1px solid #e5e7eb', background: 'white', fontSize: 14, color: '#292929', outline: 'none', resize: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
-            </div>
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 6 }}>{T.priceLabel}</label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <div style={{ position: 'relative', flex: 1 }}>
-                  <input value={form.price} onChange={e => setForm({ ...form, price: e.target.value })}
-                    placeholder={T.pricePh} type="number" className="input-field" />
-                  <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#888', fontWeight: 600 }}>DA</span>
-                </div>
-                <select value={form.priceType} onChange={e => setForm({ ...form, priceType: e.target.value })}
-                  style={{ padding: '12px', borderRadius: 12, border: '1px solid #e5e7eb', background: 'white', fontSize: 13, color: '#292929' }}>
-                  {T.priceTypes.map(pt => <option key={pt}>{pt}</option>)}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ display: 'block', color: '#59364A', fontWeight: 700, fontSize: 13, marginBottom: 6 }}>
+                  {lang === 'fr' ? 'Wilaya *' : 'الولاية *'}
+                </label>
+                <select value={wilaya} onChange={e => setWilaya(e.target.value)} style={{ width: '100%', padding: '13px 16px', borderRadius: 16, border: '2px solid #e8ddd6', fontSize: 14, color: '#292929', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
+                  {wilayas.map(w => <option key={w}>{w}</option>)}
                 </select>
               </div>
-            </div>
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 6 }}>{T.availLabel}</label>
-              <input value={form.availability} onChange={e => setForm({ ...form, availability: e.target.value })}
-                placeholder={T.availPh} className="input-field" />
-            </div>
-          </div>
-        )}
 
-        {step === 'location' && (
-          <div>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#292929', margin: '0 0 6px' }}>{T.step3Title}</h2>
-            <p style={{ fontSize: 13, color: '#888', margin: '0 0 20px' }}>{T.step3Sub}</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {[
-                { key: 'atHome', icon: '🏘️', label: T.atHome },
-                { key: 'atMine', icon: '🏠', label: T.atMine },
-                { key: 'remote', icon: '💻', label: T.remote },
-              ].map(opt => (
-                <button key={opt.key} onClick={() => toggleType(opt.key)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px', borderRadius: 14, border: '2px solid', borderColor: serviceType.includes(opt.key) ? '#59364A' : '#e5e7eb', background: serviceType.includes(opt.key) ? 'rgba(89,54,74,0.05)' : 'white', cursor: 'pointer', textAlign: isRTL ? 'right' : 'left', width: '100%' }}>
-                  <span style={{ fontSize: 28 }}>{opt.icon}</span>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: serviceType.includes(opt.key) ? '#59364A' : '#292929' }}>{opt.label}</span>
-                  {serviceType.includes(opt.key) && <span style={{ marginLeft: 'auto', color: '#59364A', fontSize: 18 }}>✓</span>}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+              <div>
+                <label style={{ display: 'block', color: '#59364A', fontWeight: 700, fontSize: 13, marginBottom: 6 }}>
+                  {lang === 'fr' ? 'Commune *' : 'البلدية *'}
+                </label>
+                <input value={commune} onChange={e => setCommune(e.target.value)}
+                  placeholder={lang === 'fr' ? 'Votre commune (ex: Bab El Oued)' : 'بلديتك (مثال: باب الوادي)'}
+                  style={{ width: '100%', padding: '13px 16px', borderRadius: 16, border: '2px solid #e8ddd6', fontSize: 14, outline: 'none', color: '#292929', boxSizing: 'border-box', background: '#fff' }} />
+              </div>
 
-        {step === 'preview' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#292929', margin: '0 0 4px' }}>{T.step4Title}</h2>
-              <p style={{ fontSize: 13, color: '#888', margin: 0 }}>{T.step4Sub}</p>
+              <div style={{ background: '#fff', borderRadius: 16, padding: '16px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={deplacement} onChange={e => setDeplacement(e.target.checked)} style={{ width: 20, height: 20, accentColor: '#59364A' }} />
+                  <div>
+                    <div style={{ color: '#292929', fontWeight: 700, fontSize: 14 }}>
+                      {lang === 'fr' ? 'Je me déplace chez la cliente' : 'أتنقل إلى منزل العميلة'}
+                    </div>
+                    <div style={{ color: '#999', fontSize: 12 }}>
+                      {lang === 'fr' ? 'Vous pouvez vous déplacer dans un rayon donné' : 'يمكنك التنقل في نطاق معين'}
+                    </div>
+                  </div>
+                </label>
+                {deplacement && (
+                  <div style={{ marginTop: 12 }}>
+                    <label style={{ display: 'block', color: '#59364A', fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                      {lang === 'fr' ? 'Distance maximale :' : 'المسافة القصوى:'}
+                    </label>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {['5 km', '10 km', '25 km', '50 km'].map(d => (
+                        <button key={d} onClick={() => setDistanceMax(d)} style={{ padding: '6px 14px', borderRadius: 20, border: '2px solid ' + (distanceMax === d ? '#C77D69' : '#e8ddd6'), background: distanceMax === d ? '#C77D69' : '#FAF7F2', color: distanceMax === d ? '#fff' : '#666', fontSize: 13, cursor: 'pointer' }}>
+                          {d}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ background: '#fff', borderRadius: 16, padding: '16px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                  <div>
+                    <div style={{ color: '#292929', fontWeight: 700, fontSize: 14 }}>
+                      {lang === 'fr' ? 'Disponible maintenant' : 'متاحة الآن'}
+                    </div>
+                    <div style={{ color: '#999', fontSize: 12 }}>
+                      {lang === 'fr' ? 'Votre statut visible sur votre profil' : 'حالتك مرئية على ملفك'}
+                    </div>
+                  </div>
+                  <div onClick={() => setDisponible(!disponible)} style={{ width: 44, height: 24, borderRadius: 12, background: disponible ? '#59364A' : '#ddd', position: 'relative', cursor: 'pointer', transition: 'background 0.3s' }}>
+                    <div style={{ position: 'absolute', top: 3, left: disponible ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.3s', boxShadow: '0 1px 4px rgba(0,0,0,0.2)' }} />
+                  </div>
+                </label>
+              </div>
             </div>
-            <div className="card" style={{ border: '2px solid rgba(89,54,74,0.15)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                <div style={{ width: 48, height: 48, borderRadius: 14, background: 'linear-gradient(135deg, rgba(89,54,74,0.1), rgba(199,125,105,0.15))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>
-                  {selectedCat !== null ? categories[selectedCat].icon : '✨'}
+
+            {/* Récap avant publication */}
+            {canSubmit && (
+              <div style={{ background: '#fff', borderRadius: 16, padding: '16px', marginTop: 16, border: '2px solid #A8B5A2' }}>
+                <div style={{ color: '#59364A', fontWeight: 800, fontSize: 14, marginBottom: 10 }}>
+                  ✅ {lang === 'fr' ? 'Récapitulatif de votre annonce' : 'ملخص إعلانك'}
                 </div>
-                <div>
-                  <p style={{ fontSize: 15, fontWeight: 700, color: '#292929', margin: 0 }}>{form.title || T.titleDefault}</p>
-                  <p style={{ fontSize: 12, color: '#888', margin: '2px 0 0' }}>{selectedCat !== null ? (isRTL ? categories[selectedCat].ar : categories[selectedCat].fr) : ''}</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {[
+                    { l: lang === 'fr' ? 'Catégorie' : 'الفئة', v: `${catSelect} ${sousCat}` },
+                    { l: lang === 'fr' ? 'Titre' : 'العنوان', v: titre },
+                    { l: lang === 'fr' ? 'Tarif' : 'السعر', v: `${tarifMin}${tarifMax ? ' — ' + tarifMax : ''} DA` },
+                    { l: lang === 'fr' ? 'Zone' : 'المنطقة', v: `${commune}, ${wilaya}` },
+                  ].map((item, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 8, fontSize: 13 }}>
+                      <span style={{ color: '#999', minWidth: 80 }}>{item.l} :</span>
+                      <span style={{ color: '#292929', fontWeight: 600 }}>{item.v}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <p style={{ fontSize: 13, color: '#555', lineHeight: 1.6, margin: '0 0 12px' }}>{form.description || T.descDefault}</p>
-              {form.price && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 12, color: '#888' }}>{T.priceLabel2}</span>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: '#C77D69' }}>{form.price} DA / {form.priceType}</span>
-                </div>
-              )}
-            </div>
-            <div style={{ background: 'rgba(168,181,162,0.15)', borderRadius: 12, padding: 14, border: '1px solid rgba(168,181,162,0.3)' }}>
-              <p style={{ fontSize: 12, color: '#666', margin: 0, lineHeight: 1.6 }}>{T.notice}</p>
-            </div>
-            <button className="btn-primary" style={{ padding: '16px', fontSize: 16, borderRadius: 14 }}>{T.publish}</button>
-            <p style={{ fontSize: 12, color: '#aaa', textAlign: 'center', margin: 0 }}>{T.publishSub}</p>
-          </div>
-        )}
-
-        <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
-          {stepIndex > 0 && (
-            <button onClick={() => setStep(steps[stepIndex - 1])} className="btn-outline" style={{ flex: 1 }}>{T.back}</button>
-          )}
-          {step !== 'preview' && (
-            <button onClick={() => setStep(steps[stepIndex + 1])}
-              className="btn-primary" style={{ flex: 1, opacity: step === 'category' && selectedCat === null ? 0.5 : 1 }}
-              disabled={step === 'category' && selectedCat === null}>
-              {T.next}
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="bottom-nav">
-        {[
-          { icon: '🏠', label: lang === 'fr' ? 'Accueil' : 'الرئيسية', href: '/' },
-          { icon: '🔍', label: lang === 'fr' ? 'Rechercher' : 'بحث', href: '/rechercher' },
-          { icon: '➕', label: lang === 'fr' ? 'Publier' : 'نشر', href: '/publier', special: true, active: true },
-          { icon: '💬', label: lang === 'fr' ? 'Messages' : 'رسائل', href: '/messages' },
-          { icon: '👤', label: lang === 'fr' ? 'Profil' : 'ملفي', href: '/profil' },
-        ].map((item, i) => (
-          <a key={i} href={item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, textDecoration: 'none', flex: 1 }}>
-            {item.special ? (
-              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg, #59364A, #C77D69)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, color: 'white', boxShadow: '0 4px 12px rgba(89,54,74,0.4)', marginTop: -20 }}>
-                {item.icon}
-              </div>
-            ) : (
-              <span style={{ fontSize: 22 }}>{item.icon}</span>
             )}
-            <span style={{ fontSize: 10, fontWeight: item.active ? 700 : 500, color: item.active ? '#59364A' : '#888' }}>{item.label}</span>
-          </a>
-        ))}
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+              <button onClick={() => setEtape(2)} style={{ flex: 1, padding: '14px', background: '#fff', color: '#59364A', border: '2px solid #59364A', borderRadius: 25, fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>
+                ← {lang === 'fr' ? 'Retour' : 'رجوع'}
+              </button>
+              <button onClick={() => canSubmit && setSubmitted(true)} style={{ flex: 2, padding: '14px', background: canSubmit ? 'linear-gradient(135deg, #59364A, #C77D69)' : '#ddd', color: '#FAF7F2', border: 'none', borderRadius: 25, fontSize: 15, fontWeight: 700, cursor: canSubmit ? 'pointer' : 'not-allowed' }}>
+                🌸 {lang === 'fr' ? 'Publier mon service' : 'نشر خدمتي'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Nav bas */}
+      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #f0e8e0', display: 'flex', justifyContent: 'space-around', padding: '10px 0 14px', boxShadow: '0 -4px 20px rgba(89,54,74,0.08)', zIndex: 50 }}>
+        {[
+          { icon: '🏠', fr: 'Accueil', ar: 'الرئيسية', href: '/' },
+          { icon: '🔍', fr: 'Rechercher', ar: 'بحث', href: '/rechercher' },
+          { icon: '➕', fr: 'Publier', ar: 'نشر', href: '/publier', active: true },
+          { icon: '💬', fr: 'Messages', ar: 'رسائل', href: '/messages' },
+          { icon: '👤', fr: 'Profil', ar: 'حسابي', href: '/profil' },
+        ].map((item, i) => (
+          <Link key={i} href={item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, textDecoration: 'none', color: (item as {active?:boolean}).active ? '#59364A' : '#bbb' }}>
+            <span style={{ fontSize: 22 }}>{item.icon}</span>
+            <span style={{ fontSize: 10, fontWeight: (item as {active?:boolean}).active ? 700 : 400 }}>{lang === 'fr' ? item.fr : item.ar}</span>
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 }
