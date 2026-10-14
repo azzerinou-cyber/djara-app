@@ -1,285 +1,289 @@
-'use client';
-import { useState } from 'react';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
+'use client'
 
-type Lang = 'fr' | 'ar';
-type Onglet = 'services' | 'avis' | 'galerie';
+export const dynamic = 'force-dynamic'
+
+import { useState } from 'react'
+import { useParams } from 'next/navigation'
+
+type Lang = 'fr' | 'ar'
+type Onglet = 'services' | 'galerie' | 'avis'
 
 const mockProfiles: Record<string, {
-  prenom: string; nomPro: string; commune: string; wilaya: string;
-  bio: string; categorie: string; specialites: string[];
-  tarifMin: number; tarifMax: number; tarifType: string;
-  disponible: boolean; deplacement: boolean; distanceMax: string;
-  badge: boolean; niveauConfiance: number;
-  noteGlobale: number; totalAvis: number; totalPrestations: number;
-  membreSince: string; avatar: string;
+  nom: string
+  metier: string
+  commune: string
+  wilaya: string
+  bio: string
+  note: number
+  avis: number
+  trustLevel: number
+  disponible: boolean
+  tarif: string
+  services: string[]
 }> = {
   '1': {
-    prenom: 'Yasmine', nomPro: 'Yasmine Coiffure', commune: 'Bab El Oued', wilaya: 'Alger',
-    bio: 'Coiffeuse professionnelle avec 8 ans d\'expérience. Spécialisée dans les chignons de mariée, les coiffures traditionnelles et les soins capillaires naturels. Je me déplace à domicile dans tout Alger.',
-    categorie: '💄 Beauté & Bien-être', specialites: ['Coiffure à domicile', 'Chignons de mariée', 'Soins capillaires', 'Henné'],
-    tarifMin: 800, tarifMax: 3000, tarifType: 'prestation',
-    disponible: true, deplacement: true, distanceMax: '25 km',
-    badge: true, niveauConfiance: 3, noteGlobale: 4.9, totalAvis: 47, totalPrestations: 61, membreSince: 'Mars 2024', avatar: '👩',
+    nom: 'Fatima Z.',
+    metier: 'Coiffeuse & Maquilleuse',
+    commune: 'Hydra',
+    wilaya: 'Alger',
+    bio: 'Spécialiste coiffure traditionnelle et moderne. 8 ans d\'expérience. Je me déplace à domicile.',
+    note: 4.8,
+    avis: 47,
+    trustLevel: 3,
+    disponible: true,
+    tarif: 'À partir de 1 500 DA',
+    services: ['Coiffure mariée', 'Maquillage événementiel', 'Henné', 'Soins capillaires'],
   },
   '2': {
-    prenom: 'Nadia', nomPro: 'Nadia Pâtisserie', commune: 'Hydra', wilaya: 'Alger',
-    bio: 'Pâtissière passionnée, autodidacte depuis 10 ans. Gâteaux traditionnels algériens, pièces montées et pâtisseries orientales pour tous vos événements.',
-    categorie: '🍳 Maison & Quotidien', specialites: ['Gâteaux traditionnels', 'Pièces montées', 'Makroud', 'Baklawa'],
-    tarifMin: 1500, tarifMax: 8000, tarifType: 'prestation',
-    disponible: true, deplacement: false, distanceMax: '',
-    badge: true, niveauConfiance: 2, noteGlobale: 4.7, totalAvis: 32, totalPrestations: 44, membreSince: 'Juin 2024', avatar: '👩‍🍳',
+    nom: 'Amina B.',
+    metier: 'Cours de soutien scolaire',
+    commune: 'Bab Ezzouar',
+    wilaya: 'Alger',
+    bio: 'Professeure certifiée, spécialisée mathématiques et sciences pour collège et lycée.',
+    note: 4.9,
+    avis: 32,
+    trustLevel: 2,
+    disponible: true,
+    tarif: '800 DA / heure',
+    services: ['Mathématiques', 'Physique-chimie', 'Sciences naturelles', 'Préparation BAC'],
   },
-  '3': {
-    prenom: 'Houria', nomPro: 'Prof Houria', commune: 'El Biar', wilaya: 'Alger',
-    bio: 'Enseignante en mathématiques et physique, 15 ans d\'expérience. Cours particuliers du primaire au lycée, préparation BEM et BAC.',
-    categorie: '📚 Éducation', specialites: ['Mathématiques', 'Physique-Chimie', 'Soutien BEM', 'Prépa BAC'],
-    tarifMin: 600, tarifMax: 1200, tarifType: 'heure',
-    disponible: false, deplacement: true, distanceMax: '10 km',
-    badge: false, niveauConfiance: 2, noteGlobale: 4.8, totalAvis: 28, totalPrestations: 115, membreSince: 'Janvier 2024', avatar: '👩‍🏫',
-  },
-  '4': {
-    prenom: 'Samia', nomPro: 'Samia Couture', commune: 'Kouba', wilaya: 'Alger',
-    bio: 'Couturière et broderie traditionnelle. Création de robes kabyles, tenues de cérémonie et retouches. Travail soigné et délais respectés.',
-    categorie: '🧵 Création & Artisanat', specialites: ['Robes kabyles', 'Broderie traditionnelle', 'Retouches', 'Tenues de cérémonie'],
-    tarifMin: 2000, tarifMax: 15000, tarifType: 'prestation',
-    disponible: true, deplacement: false, distanceMax: '',
-    badge: true, niveauConfiance: 3, noteGlobale: 5.0, totalAvis: 19, totalPrestations: 23, membreSince: 'Septembre 2024', avatar: '👩‍🎨',
-  },
-};
+}
 
-const mockAvis = [
-  { id: 1, prenom: 'Fatima', note: 5, commentaire: 'Travail magnifique, je suis ravie ! Très professionnelle et ponctuelle.', date: 'Il y a 2 jours', ponctualite: 5, communication: 5, qualite: 5 },
-  { id: 2, prenom: 'Amina', note: 5, commentaire: 'Je recommande vivement. Ma fille était superbe pour son mariage.', date: 'Il y a 1 semaine', ponctualite: 4, communication: 5, qualite: 5 },
-  { id: 3, prenom: 'Karima', note: 4, commentaire: 'Très bon travail, résultat conforme à mes attentes.', date: 'Il y a 2 semaines', ponctualite: 4, communication: 4, qualite: 5 },
-];
+const t = {
+  fr: {
+    contacter: 'Contacter',
+    demanderPrestation: 'Demander une prestation',
+    services: 'Services',
+    galerie: 'Galerie',
+    avis: 'Avis',
+    disponible: 'Disponible',
+    indisponible: 'Indisponible',
+    tarif: 'Tarif indicatif',
+    verifie: 'Profil vérifié',
+    note: 'Note',
+    retour: '← Retour',
+  },
+  ar: {
+    contacter: 'تواصل',
+    demanderPrestation: 'طلب خدمة',
+    services: 'الخدمات',
+    galerie: 'معرض الأعمال',
+    avis: 'التقييمات',
+    disponible: 'متاحة',
+    indisponible: 'غير متاحة',
+    tarif: 'السعر التقريبي',
+    verifie: 'ملف موثق',
+    note: 'التقييم',
+    retour: 'رجوع →',
+  },
+}
 
-const galerie = ['🎨', '✨', '💅', '🌸', '💄', '👑', '🌟', '💫', '🎀'];
+const COLORS = {
+  prune: '#59364A',
+  terra: '#C77D69',
+  ivoire: '#FAF7F2',
+  sauge: '#A8B5A2',
+  anthracite: '#292929',
+}
 
 export default function ProfilDynamiquePage() {
-  const params = useParams();
-  const id = params?.id as string;
-  const profil = mockProfiles[id] || mockProfiles['1'];
+  const params = useParams()
+  const id = params?.id as string
+  const profil = mockProfiles[id] || mockProfiles['1']
 
-  const [lang, setLang] = useState<Lang>('fr');
-  const isRTL = lang === 'ar';
-  const [onglet, setOnglet] = useState<Onglet>('services');
-  const [contactModal, setContactModal] = useState(false);
+  const [lang, setLang] = useState<Lang>('fr')
+  const [onglet, setOnglet] = useState<Onglet>('services')
+  const isRTL = lang === 'ar'
+  const txt = t[lang]
 
-  const t = {
-    fr: {
-      disponible: 'Disponible', indisponible: 'Indisponible',
-      avis: 'avis', prestations: 'prestations', membre: 'Membre depuis',
-      services: 'Services', avisTab: 'Avis', galerie: 'Galerie',
-      bio: 'À propos', specialites: 'Spécialités',
-      tarif: 'Tarif indicatif', deplacement: 'Se déplace jusqu\'à',
-      contact: 'Contacter', demande: 'Faire une demande',
-      securite: 'Pour votre sécurité, les échanges se font uniquement via DJARA.',
-      adresse: 'L\'adresse exacte n\'est jamais affichée publiquement.',
-      niveau: ['', 'Téléphone vérifié', 'Identité vérifiée', 'Profil de confiance'],
-      ponctualite: 'Ponctualité', communication: 'Communication', qualite: 'Qualité',
-      retour: '← Retour',
-    },
-    ar: {
-      disponible: 'متاحة', indisponible: 'غير متاحة',
-      avis: 'تقييم', prestations: 'خدمة', membre: 'عضو منذ',
-      services: 'الخدمات', avisTab: 'التقييمات', galerie: 'المعرض',
-      bio: 'نبذة عني', specialites: 'التخصصات',
-      tarif: 'السعر التقريبي', deplacement: 'تنتقل حتى',
-      contact: 'تواصلي', demande: 'طلب خدمة',
-      securite: 'لأمانك، التواصل والدفع يتم فقط عبر DJARA.',
-      adresse: 'عنوانك الدقيق لن يُعرض للعموم أبداً.',
-      niveau: ['', 'هاتف موثق', 'هوية موثقة', 'ملف موثوق'],
-      ponctualite: 'الالتزام بالوقت', communication: 'التواصل', qualite: 'جودة الخدمة',
-      retour: 'رجوع →',
-    },
-  }[lang];
-
-  const StarBar = ({ label, val }: { label: string; val: number }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-      <span style={{ fontSize: 11, color: '#999', width: 90, flexShrink: 0 }}>{label}</span>
-      <div style={{ flex: 1, height: 4, background: '#f0e8e0', borderRadius: 2 }}>
-        <div style={{ width: `${(val / 5) * 100}%`, height: '100%', background: '#C77D69', borderRadius: 2 }} />
-      </div>
-      <span style={{ fontSize: 11, color: '#666', width: 20 }}>{val}</span>
-    </div>
-  );
+  const stars = (note: number) =>
+    Array.from({ length: 5 }, (_, i) => (
+      <span key={i} style={{ color: i < Math.round(note) ? '#C77D69' : '#ddd', fontSize: '18px' }}>★</span>
+    ))
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', background: '#FAF7F2', fontFamily: "'Segoe UI', system-ui, sans-serif", paddingBottom: 100 }}>
-
-      <header style={{ background: '#59364A', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
-        <Link href="/rechercher" style={{ color: '#FAF7F2', textDecoration: 'none', fontSize: 14 }}>{t.retour}</Link>
-        <button onClick={() => setLang(lang === 'fr' ? 'ar' : 'fr')} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FAF7F2', borderRadius: 20, padding: '5px 12px', cursor: 'pointer', fontSize: 12 }}>
-          {lang === 'fr' ? 'عربي' : 'FR'}
+    <main style={{
+      background: COLORS.ivoire,
+      minHeight: '100vh',
+      direction: isRTL ? 'rtl' : 'ltr',
+      fontFamily: 'system-ui, sans-serif',
+    }}>
+      {/* Header */}
+      <div style={{ background: COLORS.prune, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <a href="/rechercher" style={{ color: '#fff', textDecoration: 'none', fontSize: '14px' }}>
+          {txt.retour}
+        </a>
+        <button
+          onClick={() => setLang(lang === 'fr' ? 'ar' : 'fr')}
+          style={{
+            background: 'rgba(255,255,255,0.2)', color: '#fff',
+            border: 'none', borderRadius: '8px', padding: '6px 12px',
+            fontSize: '13px', cursor: 'pointer',
+          }}
+        >
+          {lang === 'fr' ? 'العربية' : 'Français'}
         </button>
-      </header>
+      </div>
 
-      <div style={{ background: 'linear-gradient(160deg, #59364A 0%, #7a4d68 100%)', padding: '24px 20px 32px' }}>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '3px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38 }}>{profil.avatar}</div>
-            {profil.disponible && <div style={{ position: 'absolute', bottom: 4, right: 4, width: 14, height: 14, background: '#4caf50', borderRadius: '50%', border: '2px solid #59364A' }} />}
+      {/* Carte profil */}
+      <div style={{
+        background: '#fff',
+        margin: '0 0 12px 0',
+        padding: '28px 20px 20px',
+        borderBottom: '1px solid #f0ebe4',
+      }}>
+        {/* Avatar + infos */}
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', marginBottom: '16px' }}>
+          <div style={{
+            width: '72px', height: '72px', borderRadius: '50%',
+            background: `linear-gradient(135deg, ${COLORS.prune}, ${COLORS.terra})`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '28px', flexShrink: 0,
+          }}>
+            👩
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <h1 style={{ color: '#FAF7F2', fontSize: 20, fontWeight: 900, margin: 0 }}>{profil.nomPro}</h1>
-              {profil.badge && <span style={{ background: '#C77D69', color: '#fff', fontSize: 10, padding: '2px 8px', borderRadius: 10, fontWeight: 700 }}>✓ VÉRIFIÉ</span>}
-            </div>
-            <div style={{ color: 'rgba(250,247,242,0.7)', fontSize: 13, marginTop: 2 }}>{profil.categorie}</div>
-            <div style={{ color: 'rgba(250,247,242,0.6)', fontSize: 12, marginTop: 2 }}>📍 {profil.commune}, {profil.wilaya}</div>
-            <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
-              {[
-                { val: profil.noteGlobale, label: '★ Note' },
-                { val: profil.totalAvis, label: t.avis },
-                { val: profil.totalPrestations, label: t.prestations },
-              ].map((s, i) => (
-                <div key={i} style={{ textAlign: 'center' }}>
-                  <div style={{ color: '#FAF7F2', fontWeight: 900, fontSize: 16 }}>{s.val}</div>
-                  <div style={{ color: 'rgba(250,247,242,0.5)', fontSize: 10 }}>{s.label}</div>
-                </div>
-              ))}
-            </div>
+            <h1 style={{ fontSize: '20px', fontWeight: 700, color: COLORS.anthracite, marginBottom: '4px' }}>
+              {profil.nom}
+            </h1>
+            <p style={{ color: COLORS.terra, fontSize: '14px', fontWeight: 600, marginBottom: '4px' }}>
+              {profil.metier}
+            </p>
+            <p style={{ color: '#888', fontSize: '13px' }}>
+              📍 {profil.commune}, {profil.wilaya}
+            </p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 6, marginTop: 16, flexWrap: 'wrap' }}>
-          {[1, 2, 3].map(n => (
-            <span key={n} style={{ background: n <= profil.niveauConfiance ? 'rgba(168,181,162,0.3)' : 'rgba(255,255,255,0.05)', border: `1px solid ${n <= profil.niveauConfiance ? '#A8B5A2' : 'rgba(255,255,255,0.1)'}`, color: n <= profil.niveauConfiance ? '#c8d8c2' : 'rgba(255,255,255,0.2)', fontSize: 10, padding: '3px 10px', borderRadius: 20 }}>
-              {n <= profil.niveauConfiance ? '✓' : '○'} {t.niveau[n]}
+
+        {/* Badges */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
+          <span style={{
+            background: profil.disponible ? '#f0f7ee' : '#fff0f0',
+            color: profil.disponible ? '#4a8a3a' : '#c0392b',
+            padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
+          }}>
+            {profil.disponible ? `✓ ${txt.disponible}` : `✗ ${txt.indisponible}`}
+          </span>
+          {profil.trustLevel >= 2 && (
+            <span style={{
+              background: '#f5f0ee', color: COLORS.prune,
+              padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600,
+            }}>
+              🛡️ {txt.verifie}
             </span>
+          )}
+        </div>
+
+        {/* Note */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+          <div>{stars(profil.note)}</div>
+          <span style={{ fontWeight: 700, color: COLORS.anthracite }}>{profil.note}</span>
+          <span style={{ color: '#888', fontSize: '13px' }}>({profil.avis} {txt.avis})</span>
+        </div>
+
+        {/* Tarif */}
+        <div style={{
+          background: COLORS.ivoire, borderRadius: '10px', padding: '10px 14px',
+          marginBottom: '16px', fontSize: '14px',
+        }}>
+          <span style={{ color: '#888' }}>{txt.tarif} : </span>
+          <span style={{ color: COLORS.prune, fontWeight: 700 }}>{profil.tarif}</span>
+        </div>
+
+        {/* CTA */}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button style={{
+            flex: 1, padding: '13px', background: COLORS.prune,
+            color: '#fff', border: 'none', borderRadius: '12px',
+            fontWeight: 700, fontSize: '15px', cursor: 'pointer',
+          }}>
+            {txt.demanderPrestation}
+          </button>
+          <button style={{
+            padding: '13px 20px', background: '#fff',
+            color: COLORS.prune, border: `2px solid ${COLORS.prune}`,
+            borderRadius: '12px', fontWeight: 700, fontSize: '15px', cursor: 'pointer',
+          }}>
+            {txt.contacter}
+          </button>
+        </div>
+      </div>
+
+      {/* Onglets */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #f0ebe4' }}>
+        <div style={{ display: 'flex' }}>
+          {(['services', 'galerie', 'avis'] as Onglet[]).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setOnglet(tab)}
+              style={{
+                flex: 1, padding: '14px', border: 'none', background: 'none',
+                cursor: 'pointer', fontSize: '14px', fontWeight: 600,
+                color: onglet === tab ? COLORS.prune : '#888',
+                borderBottom: onglet === tab ? `3px solid ${COLORS.prune}` : '3px solid transparent',
+              }}
+            >
+              {txt[tab as keyof typeof txt]}
+            </button>
           ))}
         </div>
-        <div style={{ marginTop: 12 }}>
-          <span style={{ background: profil.disponible ? 'rgba(76,175,80,0.2)' : 'rgba(255,255,255,0.1)', color: profil.disponible ? '#81c784' : 'rgba(255,255,255,0.4)', fontSize: 12, padding: '4px 12px', borderRadius: 20, border: `1px solid ${profil.disponible ? 'rgba(76,175,80,0.4)' : 'rgba(255,255,255,0.15)'}` }}>
-            {profil.disponible ? '● ' + t.disponible : '○ ' + t.indisponible}
-          </span>
-        </div>
       </div>
 
-      <div style={{ background: '#fff', borderBottom: '1px solid #f0e8e0', display: 'flex' }}>
-        {(['services', 'avis', 'galerie'] as Onglet[]).map(o => (
-          <button key={o} onClick={() => setOnglet(o)} style={{ flex: 1, padding: '14px 0', background: 'none', border: 'none', borderBottom: onglet === o ? '2px solid #59364A' : '2px solid transparent', color: onglet === o ? '#59364A' : '#999', fontSize: 13, fontWeight: onglet === o ? 700 : 400, cursor: 'pointer' }}>
-            {o === 'services' ? t.services : o === 'avis' ? t.avisTab : t.galerie}
-          </button>
-        ))}
-      </div>
-
-      <div style={{ padding: '20px 16px' }}>
+      {/* Contenu onglet */}
+      <div style={{ padding: '20px' }}>
         {onglet === 'services' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ background: '#fff', borderRadius: 16, padding: 16 }}>
-              <div style={{ color: '#59364A', fontWeight: 800, fontSize: 14, marginBottom: 8 }}>{t.bio}</div>
-              <p style={{ color: '#555', fontSize: 14, lineHeight: 1.6, margin: 0 }}>{profil.bio}</p>
-            </div>
-            <div style={{ background: '#fff', borderRadius: 16, padding: 16 }}>
-              <div style={{ color: '#59364A', fontWeight: 800, fontSize: 14, marginBottom: 10 }}>{t.specialites}</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {profil.specialites.map((s, i) => (
-                  <span key={i} style={{ background: '#FAF7F2', border: '1px solid #e8ddd6', color: '#59364A', fontSize: 12, padding: '5px 12px', borderRadius: 20 }}>{s}</span>
-                ))}
-              </div>
-            </div>
-            <div style={{ background: '#fff', borderRadius: 16, padding: 16 }}>
-              <div style={{ color: '#59364A', fontWeight: 800, fontSize: 14, marginBottom: 10 }}>💰 {t.tarif}</div>
-              <div style={{ color: '#292929', fontSize: 18, fontWeight: 900 }}>{profil.tarifMin.toLocaleString()} – {profil.tarifMax.toLocaleString()} DA</div>
-              <div style={{ color: '#999', fontSize: 12, marginTop: 2 }}>par {profil.tarifType}</div>
-              {profil.deplacement && (
-                <div style={{ marginTop: 12, padding: '10px 12px', background: '#FAF7F2', borderRadius: 10, fontSize: 13, color: '#555' }}>
-                  🚗 {t.deplacement} <strong>{profil.distanceMax}</strong>
-                </div>
-              )}
-            </div>
-            <div style={{ background: '#e8f5e9', borderRadius: 12, padding: '10px 14px', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-              <span style={{ fontSize: 16 }}>🔒</span>
-              <span style={{ color: '#2e7d32', fontSize: 12, lineHeight: 1.5 }}>{t.adresse}</span>
-            </div>
-            <div style={{ color: '#999', fontSize: 11, textAlign: 'center' }}>{t.membre} {profil.membreSince}</div>
-          </div>
-        )}
-
-        {onglet === 'avis' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ background: '#fff', borderRadius: 16, padding: 16 }}>
-              <div style={{ display: 'flex', gap: 20, alignItems: 'center', marginBottom: 16 }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 40, fontWeight: 900, color: '#59364A' }}>{profil.noteGlobale}</div>
-                  <div style={{ color: '#C77D69', fontSize: 16 }}>{'★'.repeat(Math.round(profil.noteGlobale))}</div>
-                  <div style={{ color: '#999', fontSize: 11 }}>{profil.totalAvis} {t.avis}</div>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <StarBar label={t.ponctualite} val={4.8} />
-                  <StarBar label={t.communication} val={4.9} />
-                  <StarBar label={t.qualite} val={5.0} />
-                </div>
-              </div>
-            </div>
-            {mockAvis.map(a => (
-              <div key={a.id} style={{ background: '#fff', borderRadius: 16, padding: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, #C77D69, #A8B5A2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 14 }}>{a.prenom[0]}</div>
-                    <div>
-                      <div style={{ fontWeight: 700, color: '#292929', fontSize: 14 }}>{a.prenom}</div>
-                      <div style={{ color: '#bbb', fontSize: 11 }}>{a.date}</div>
-                    </div>
-                  </div>
-                  <div style={{ color: '#C77D69', fontSize: 14 }}>{'★'.repeat(a.note)}</div>
-                </div>
-                <p style={{ color: '#555', fontSize: 13, lineHeight: 1.6, margin: 0 }}>{a.commentaire}</p>
-                <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-                  {[{ k: t.ponctualite, v: a.ponctualite }, { k: t.communication, v: a.communication }, { k: t.qualite, v: a.qualite }].map((x, i) => (
-                    <span key={i} style={{ background: '#FAF7F2', fontSize: 10, padding: '2px 8px', borderRadius: 10, color: '#666' }}>{x.k} {x.v}/5</span>
-                  ))}
-                </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <p style={{ color: '#555', fontSize: '14px', lineHeight: '1.6', marginBottom: '12px' }}>
+              {profil.bio}
+            </p>
+            {profil.services.map((s, i) => (
+              <div key={i} style={{
+                background: '#fff', borderRadius: '12px', padding: '14px 16px',
+                border: '1px solid #f0ebe4', display: 'flex', alignItems: 'center', gap: '12px',
+              }}>
+                <span style={{ fontSize: '20px' }}>✦</span>
+                <span style={{ color: COLORS.anthracite, fontSize: '15px' }}>{s}</span>
               </div>
             ))}
           </div>
         )}
 
         {onglet === 'galerie' && (
-          <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 3 }}>
-              {galerie.map((emoji, i) => (
-                <div key={i} style={{ aspectRatio: '1', background: 'linear-gradient(135deg, #f0e8e0, #e8ddd6)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>{emoji}</div>
-              ))}
-            </div>
-            <div style={{ textAlign: 'center', marginTop: 16, color: '#bbb', fontSize: 12 }}>
-              {lang === 'fr' ? 'Photos de réalisations' : 'صور الأعمال'}
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+            {Array.from({ length: 6 }, (_, i) => (
+              <div key={i} style={{
+                aspectRatio: '1', background: `hsl(${320 + i * 15}, 30%, ${85 + i * 2}%)`,
+                borderRadius: '10px', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', fontSize: '28px',
+              }}>
+                {['🌸', '💄', '✂️', '💅', '🌺', '🎨'][i]}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {onglet === 'avis' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {[
+              { nom: 'Nadia M.', note: 5, texte: 'Excellent travail, très professionnelle et ponctuelle.', date: 'Oct 2026' },
+              { nom: 'Sara K.', note: 5, texte: 'Je recommande vivement, résultat magnifique !', date: 'Sep 2026' },
+              { nom: 'Imane L.', note: 4, texte: 'Très satisfaite, je reviendrai.', date: 'Sep 2026' },
+            ].map((avis, i) => (
+              <div key={i} style={{
+                background: '#fff', borderRadius: '14px', padding: '16px',
+                border: '1px solid #f0ebe4',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontWeight: 700, color: COLORS.anthracite }}>{avis.nom}</span>
+                  <span style={{ color: '#888', fontSize: '12px' }}>{avis.date}</span>
+                </div>
+                <div style={{ marginBottom: '8px' }}>{stars(avis.note)}</div>
+                <p style={{ color: '#555', fontSize: '14px', lineHeight: '1.5' }}>{avis.texte}</p>
+              </div>
+            ))}
           </div>
         )}
       </div>
-
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #f0e8e0', padding: '12px 16px', display: 'flex', gap: 10, zIndex: 50 }}>
-        <button onClick={() => setContactModal(true)} style={{ flex: 1, padding: '13px', background: '#FAF7F2', border: '2px solid #59364A', borderRadius: 25, color: '#59364A', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-          💬 {t.contact}
-        </button>
-        <Link href="/messages" style={{ flex: 2, padding: '13px', background: 'linear-gradient(135deg, #59364A, #7a4d68)', borderRadius: 25, color: '#FAF7F2', fontSize: 14, fontWeight: 700, textDecoration: 'none', textAlign: 'center', display: 'block' }}>
-          ✨ {t.demande}
-        </Link>
-      </div>
-
-      {contactModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
-          <div onClick={() => setContactModal(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: '#fff', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px' }}>
-            <div style={{ width: 36, height: 4, background: '#e0e0e0', borderRadius: 2, margin: '0 auto 20px' }} />
-            <div style={{ textAlign: 'center', marginBottom: 16 }}>
-              <div style={{ fontSize: 40 }}>{profil.avatar}</div>
-              <div style={{ fontWeight: 800, color: '#292929', fontSize: 16 }}>{profil.nomPro}</div>
-              <div style={{ color: '#999', fontSize: 13 }}>{profil.commune}</div>
-            </div>
-            <div style={{ background: '#fff3e0', borderRadius: 12, padding: '10px 14px', marginBottom: 20, display: 'flex', gap: 8 }}>
-              <span>🔒</span>
-              <span style={{ color: '#e65100', fontSize: 12 }}>{t.securite}</span>
-            </div>
-            <Link href="/messages" style={{ display: 'block', width: '100%', padding: '14px', background: '#59364A', borderRadius: 25, color: '#FAF7F2', fontSize: 15, fontWeight: 700, textDecoration: 'none', textAlign: 'center', boxSizing: 'border-box' }}>
-              💬 {lang === 'fr' ? 'Envoyer un message' : 'إرسال رسالة'}
-            </Link>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+    </main>
+  )
 }
