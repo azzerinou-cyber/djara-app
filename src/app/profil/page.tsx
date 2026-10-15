@@ -271,9 +271,14 @@ export default function ProfilPage() {
                           <div style={{ color: '#292929', fontWeight: 700, fontSize: 15 }}>{s.title_fr}</div>
                           {s.categories && <div style={{ color: '#C77D69', fontSize: 12, marginTop: 2 }}>{s.categories.icon} {s.categories.name_fr}</div>}
                         </div>
-                        <span style={{ background: s.is_active ? '#e8f5e9' : '#fafafa', color: s.is_active ? '#2e7d32' : '#999', fontSize: 10, padding: '3px 10px', borderRadius: 10, whiteSpace: 'nowrap' }}>
-                          {s.is_active ? (lang === 'fr' ? 'Actif' : 'نشط') : (lang === 'fr' ? 'Inactif' : 'غير نشط')}
-                        </span>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+                          <span style={{ background: s.is_active ? '#e8f5e9' : '#fafafa', color: s.is_active ? '#2e7d32' : '#999', fontSize: 10, padding: '3px 10px', borderRadius: 10, whiteSpace: 'nowrap' }}>
+                            {s.is_active ? (lang === 'fr' ? 'Actif' : 'نشط') : (lang === 'fr' ? 'Inactif' : 'غير نشط')}
+                          </span>
+                          <Link href={`/publier/${s.id}`} style={{ border: '1px solid #e8ddd6', borderRadius: 12, padding: '3px 10px', fontSize: 11, color: '#59364A', fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                            ✏️ {lang === 'fr' ? 'Modifier' : 'تعديل'}
+                          </Link>
+                        </div>
                       </div>
                       {s.description_fr && <p style={{ color: '#555', fontSize: 13, lineHeight: 1.5, margin: '8px 0 0' }}>{s.description_fr}</p>}
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10, alignItems: 'center' }}>
