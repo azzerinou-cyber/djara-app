@@ -10,6 +10,8 @@ export type Profile = {
   id: string
   display_name: string
   profile_type: ProfileType | null
+  business_name: string | null
+  commerce_number: string | null
   phone: string | null
   wilaya: string | null
   commune: string | null

@@ -11,7 +11,7 @@ const PROFILE_TYPES: { value: ProfileType; icon: string; label: string }[] = [
 
 export default function InscriptionProfilPage() {
   const { user, profile, loading: authLoading, refreshProfile } = useAuth()
-  const [form, setForm] = useState({ display_name: '', profile_type: '' as ProfileType | '', phone: '', wilaya: '', commune: '', bio: '' })
+  const [form, setForm] = useState({ display_name: '', profile_type: '' as ProfileType | '', business_name: '', commerce_number: '', phone: '', wilaya: '', commune: '', bio: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -21,6 +21,8 @@ export default function InscriptionProfilPage() {
       setForm({
         display_name: profile.display_name ?? '',
         profile_type: profile.profile_type ?? '',
+        business_name: profile.business_name ?? '',
+        commerce_number: profile.commerce_number ?? '',
         phone: profile.phone ?? '',
         wilaya: profile.wilaya ?? '',
         commune: profile.commune ?? '',
@@ -40,6 +42,11 @@ export default function InscriptionProfilPage() {
       setError('Veuillez choisir un type de profil.')
       return
     }
+    const isPro = form.profile_type === 'professionnelle'
+    if (isPro && (!form.business_name.trim() || !form.commerce_number.trim())) {
+      setError("Le nom de l'entreprise et le numéro de registre de commerce sont obligatoires.")
+      return
+    }
     setLoading(true)
     setError('')
 
@@ -47,6 +54,9 @@ export default function InscriptionProfilPage() {
       id: user.id,
       display_name: form.display_name.trim(),
       profile_type: form.profile_type,
+      // Effacés si l'utilisatrice repasse en particulière
+      business_name: isPro ? form.business_name.trim() : null,
+      commerce_number: isPro ? form.commerce_number.trim() : null,
       phone: form.phone.trim() || null,
       wilaya: form.wilaya.trim(),
       commune: form.commune.trim(),
@@ -123,6 +133,16 @@ export default function InscriptionProfilPage() {
             })}
           </div>
         </fieldset>
+
+        {form.profile_type === 'professionnelle' && (
+          <>
+            <label style={labelStyle}>Nom de l&apos;entreprise *</label>
+            <input name="business_name" value={form.business_name} onChange={handleChange} required placeholder="Ex : Yasmine Coiffure" autoComplete="organization" style={inputStyle} />
+
+            <label style={labelStyle}>Numéro de registre de commerce *</label>
+            <input name="commerce_number" value={form.commerce_number} onChange={handleChange} required placeholder="Ex : 16/00-1234567 B 21" style={inputStyle} />
+          </>
+        )}
 
         <label style={labelStyle}>Téléphone</label>
         <input name="phone" type="tel" value={form.phone} onChange={handleChange} placeholder="Ex : 0550 12 34 56" autoComplete="tel" style={inputStyle} />
