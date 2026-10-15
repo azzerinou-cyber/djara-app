@@ -1,32 +1,21 @@
 'use client'
 
-import { useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 
 type Lang = 'fr' | 'ar'
 type Onglet = 'services' | 'galerie' | 'avis'
 
-const mockProfiles: Record<string, {
-  nom: string; metier: string; commune: string; wilaya: string
-  bio: string; note: number; avis: number; trustLevel: number
-  disponible: boolean; tarif: string; services: string[]
-}> = {
-  '1': {
-    nom: 'Fatima Z.', metier: 'Coiffeuse & Maquilleuse',
-    commune: 'Hydra', wilaya: 'Alger',
-    bio: 'Spécialiste coiffure traditionnelle et moderne. 8 ans d\'expérience. Je me déplace à domicile.',
-    note: 4.8, avis: 47, trustLevel: 3, disponible: true,
-    tarif: 'À partir de 1 500 DA',
-    services: ['Coiffure mariée', 'Maquillage événementiel', 'Henné', 'Soins capillaires'],
-  },
-  '2': {
-    nom: 'Amina B.', metier: 'Cours de soutien scolaire',
-    commune: 'Bab Ezzouar', wilaya: 'Alger',
-    bio: 'Professeure certifiée, spécialisée mathématiques et sciences pour collège et lycée.',
-    note: 4.9, avis: 32, trustLevel: 2, disponible: true,
-    tarif: '800 DA / heure',
-    services: ['Mathématiques', 'Physique-chimie', 'Sciences naturelles', 'Préparation BAC'],
-  },
+interface Profile {
+  id: string
+  display_name: string
+  bio: string | null
+  avatar_url: string | null
+  commune: string | null
+  wilaya: string | null
+  trust_level: number
+  is_active: boolean
 }
 
 const t = {
@@ -34,146 +23,158 @@ const t = {
     contacter: 'Contacter', demanderPrestation: 'Demander une prestation',
     services: 'Services', galerie: 'Galerie', avis: 'Avis',
     disponible: 'Disponible', indisponible: 'Indisponible',
-    tarif: 'Tarif indicatif', verifie: 'Profil vérifié', retour: '← Retour',
+    tarif: 'Tarif indicatif', verifie: 'Profil vérifié',
+    retour: 'Retour', chargement: 'Chargement...', introuvable: 'Profil introuvable',
+    niveauConfiance: 'Niveau de confiance',
   },
   ar: {
     contacter: 'تواصل', demanderPrestation: 'طلب خدمة',
     services: 'الخدمات', galerie: 'معرض الأعمال', avis: 'التقييمات',
     disponible: 'متاحة', indisponible: 'غير متاحة',
-    tarif: 'السعر التقريبي', verifie: 'ملف موثق', retour: 'رجوع →',
+    tarif: 'السعر التقريبي', verifie: 'ملف موثق',
+    retour: 'رجوع', chargement: '...جاري التحميل', introuvable: 'الملف غير موجود',
+    niveauConfiance: 'مستوى الثقة',
   },
 }
 
 const COLORS = {
-  prune: '#59364A', terra: '#C77D69',
-  ivoire: '#FAF7F2', anthracite: '#292929',
+  prune: '#59364A', terracotta: '#C77D69',
+  ivoire: '#FAF7F2', sauge: '#A8B5A2', anthracite: '#292929',
 }
 
 export default function ProfilClient() {
   const params = useParams()
+  const router = useRouter()
   const id = params?.id as string
-  const profil = mockProfiles[id] || mockProfiles['1']
 
   const [lang, setLang] = useState<Lang>('fr')
   const [onglet, setOnglet] = useState<Onglet>('services')
-  const isRTL = lang === 'ar'
-  const txt = t[lang]
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
 
-  const stars = (note: number) =>
-    Array.from({ length: 5 }, (_, i) => (
-      <span key={i} style={{ color: i < Math.round(note) ? '#C77D69' : '#ddd', fontSize: '18px' }}>★</span>
-    ))
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!id) return
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', id)
+        .single()
+
+      if (error || !data) {
+        setNotFound(true)
+      } else {
+        setProfile(data)
+      }
+      setLoading(false)
+    }
+    fetchProfile()
+  }, [id])
+
+  const tx = t[lang]
+  const isRTL = lang === 'ar'
+
+  if (loading) return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: COLORS.ivoire }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ width: 40, height: 40, border: `3px solid ${COLORS.prune}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
+        <p style={{ color: COLORS.prune, fontFamily: 'sans-serif' }}>{tx.chargement}</p>
+      </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  )
+
+  if (notFound) return (
+    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', background: COLORS.ivoire, gap: 16 }}>
+      <div style={{ fontSize: 48 }}>👤</div>
+      <p style={{ color: COLORS.anthracite, fontFamily: 'sans-serif', fontSize: 18 }}>{tx.introuvable}</p>
+      <button onClick={() => router.back()} style={{ background: COLORS.prune, color: '#fff', border: 'none', borderRadius: 12, padding: '12px 24px', cursor: 'pointer', fontFamily: 'sans-serif' }}>
+        {tx.retour}
+      </button>
+    </div>
+  )
+
+  const trustBadge = profile!.trust_level >= 2 ? '✓' : null
 
   return (
-    <main style={{ background: COLORS.ivoire, minHeight: '100vh', direction: isRTL ? 'rtl' : 'ltr', fontFamily: 'system-ui, sans-serif' }}>
-
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', background: COLORS.ivoire, fontFamily: 'sans-serif', maxWidth: 480, margin: '0 auto' }}>
       {/* Header */}
-      <div style={{ background: COLORS.prune, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <a href="/rechercher" style={{ color: '#fff', textDecoration: 'none', fontSize: '14px' }}>{txt.retour}</a>
-        <button onClick={() => setLang(lang === 'fr' ? 'ar' : 'fr')} style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none', borderRadius: '8px', padding: '6px 12px', fontSize: '13px', cursor: 'pointer' }}>
-          {lang === 'fr' ? 'العربية' : 'Français'}
+      <div style={{ background: `linear-gradient(135deg, ${COLORS.prune} 0%, #7a4a63 100%)`, padding: '20px 20px 60px', position: 'relative' }}>
+        <button onClick={() => router.back()} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 10, padding: '8px 14px', color: '#fff', cursor: 'pointer', fontSize: 14 }}>
+          ← {tx.retour}
         </button>
-      </div>
-
-      {/* Carte profil */}
-      <div style={{ background: '#fff', padding: '28px 20px 20px', borderBottom: '1px solid #f0ebe4' }}>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', marginBottom: '16px' }}>
-          <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: `linear-gradient(135deg, ${COLORS.prune}, ${COLORS.terra})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', flexShrink: 0 }}>
-            👩
-          </div>
-          <div style={{ flex: 1 }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 700, color: COLORS.anthracite, marginBottom: '4px' }}>{profil.nom}</h1>
-            <p style={{ color: COLORS.terra, fontSize: '14px', fontWeight: 600, marginBottom: '4px' }}>{profil.metier}</p>
-            <p style={{ color: '#888', fontSize: '13px' }}>📍 {profil.commune}, {profil.wilaya}</p>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
-          <span style={{ background: profil.disponible ? '#f0f7ee' : '#fff0f0', color: profil.disponible ? '#4a8a3a' : '#c0392b', padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>
-            {profil.disponible ? `✓ ${txt.disponible}` : `✗ ${txt.indisponible}`}
-          </span>
-          {profil.trustLevel >= 2 && (
-            <span style={{ background: '#f5f0ee', color: COLORS.prune, padding: '5px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>
-              🛡️ {txt.verifie}
-            </span>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-          <div>{stars(profil.note)}</div>
-          <span style={{ fontWeight: 700, color: COLORS.anthracite }}>{profil.note}</span>
-          <span style={{ color: '#888', fontSize: '13px' }}>({profil.avis} {txt.avis})</span>
-        </div>
-
-        <div style={{ background: COLORS.ivoire, borderRadius: '10px', padding: '10px 14px', marginBottom: '16px', fontSize: '14px' }}>
-          <span style={{ color: '#888' }}>{txt.tarif} : </span>
-          <span style={{ color: COLORS.prune, fontWeight: 700 }}>{profil.tarif}</span>
-        </div>
-
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button style={{ flex: 1, padding: '13px', background: COLORS.prune, color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '15px', cursor: 'pointer' }}>
-            {txt.demanderPrestation}
-          </button>
-          <button style={{ padding: '13px 20px', background: '#fff', color: COLORS.prune, border: `2px solid ${COLORS.prune}`, borderRadius: '12px', fontWeight: 700, fontSize: '15px', cursor: 'pointer' }}>
-            {txt.contacter}
-          </button>
-        </div>
-      </div>
-
-      {/* Onglets */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #f0ebe4' }}>
-        <div style={{ display: 'flex' }}>
-          {(['services', 'galerie', 'avis'] as Onglet[]).map(tab => (
-            <button key={tab} onClick={() => setOnglet(tab)} style={{ flex: 1, padding: '14px', border: 'none', background: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 600, color: onglet === tab ? COLORS.prune : '#888', borderBottom: onglet === tab ? `3px solid ${COLORS.prune}` : '3px solid transparent' }}>
-              {txt[tab as keyof typeof txt]}
+        <div style={{ position: 'absolute', top: 8, right: 16, display: 'flex', gap: 8 }}>
+          {(['fr', 'ar'] as Lang[]).map(l => (
+            <button key={l} onClick={() => setLang(l)} style={{ background: lang === l ? COLORS.terracotta : 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: lang === l ? 700 : 400 }}>
+              {l.toUpperCase()}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Contenu */}
-      <div style={{ padding: '20px' }}>
+      {/* Avatar */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: -45 }}>
+        <div style={{ width: 90, height: 90, borderRadius: '50%', background: profile!.avatar_url ? `url(${profile!.avatar_url}) center/cover` : `linear-gradient(135deg, ${COLORS.terracotta}, ${COLORS.prune})`, border: '4px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, color: '#fff', boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}>
+          {!profile!.avatar_url && profile!.display_name?.[0]?.toUpperCase()}
+        </div>
+      </div>
+
+      {/* Infos */}
+      <div style={{ textAlign: 'center', padding: '12px 20px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: COLORS.anthracite }}>{profile!.display_name}</h1>
+          {trustBadge && <span style={{ background: COLORS.sauge, color: '#fff', borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>✓</span>}
+        </div>
+        <p style={{ color: '#888', fontSize: 14, margin: '4px 0' }}>{[profile!.commune, profile!.wilaya].filter(Boolean).join(', ')}</p>
+        {profile!.bio && <p style={{ color: COLORS.anthracite, fontSize: 14, lineHeight: 1.6, margin: '12px 0' }}>{profile!.bio}</p>}
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', margin: '8px 0 16px' }}>
+          {trustBadge && <span style={{ background: `${COLORS.sauge}22`, color: COLORS.sauge, borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 600 }}>{tx.verifie}</span>}
+          <span style={{ background: `${COLORS.sauge}22`, color: COLORS.sauge, borderRadius: 20, padding: '4px 12px', fontSize: 12 }}>{tx.niveauConfiance} {profile!.trust_level}</span>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div style={{ padding: '0 20px 20px', display: 'flex', gap: 10 }}>
+        <button style={{ flex: 1, background: '#fff', border: `1.5px solid ${COLORS.prune}`, color: COLORS.prune, borderRadius: 14, padding: '13px', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+          {tx.contacter}
+        </button>
+        <button style={{ flex: 1, background: COLORS.terracotta, border: 'none', color: '#fff', borderRadius: 14, padding: '13px', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+          {tx.demanderPrestation}
+        </button>
+      </div>
+
+      {/* Onglets */}
+      <div style={{ display: 'flex', borderBottom: '1px solid #e8e0d8', margin: '0 20px' }}>
+        {(['services', 'galerie', 'avis'] as Onglet[]).map(o => (
+          <button key={o} onClick={() => setOnglet(o)} style={{ flex: 1, background: 'none', border: 'none', borderBottom: onglet === o ? `2px solid ${COLORS.prune}` : '2px solid transparent', color: onglet === o ? COLORS.prune : '#999', padding: '12px 0', fontWeight: onglet === o ? 700 : 400, fontSize: 14, cursor: 'pointer', textTransform: 'capitalize' }}>
+            {tx[o as keyof typeof tx]}
+          </button>
+        ))}
+      </div>
+
+      {/* Contenu onglets */}
+      <div style={{ padding: 20, minHeight: 200 }}>
         {onglet === 'services' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <p style={{ color: '#555', fontSize: '14px', lineHeight: '1.6', marginBottom: '12px' }}>{profil.bio}</p>
-            {profil.services.map((s, i) => (
-              <div key={i} style={{ background: '#fff', borderRadius: '12px', padding: '14px 16px', border: '1px solid #f0ebe4', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '20px' }}>✦</span>
-                <span style={{ color: COLORS.anthracite, fontSize: '15px' }}>{s}</span>
-              </div>
-            ))}
+          <div style={{ textAlign: 'center', color: '#bbb', paddingTop: 40 }}>
+            <div style={{ fontSize: 40 }}>🛠️</div>
+            <p style={{ marginTop: 12 }}>Aucun service publié pour l'instant</p>
           </div>
         )}
-
         {onglet === 'galerie' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-            {['🌸', '💄', '✂️', '💅', '🌺', '🎨'].map((emoji, i) => (
-              <div key={i} style={{ aspectRatio: '1', background: `hsl(${320 + i * 15}, 30%, ${85 + i * 2}%)`, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px' }}>
-                {emoji}
-              </div>
-            ))}
+          <div style={{ textAlign: 'center', color: '#bbb', paddingTop: 40 }}>
+            <div style={{ fontSize: 40 }}>🖼️</div>
+            <p style={{ marginTop: 12 }}>Aucune réalisation pour l'instant</p>
           </div>
         )}
-
         {onglet === 'avis' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {[
-              { nom: 'Nadia M.', note: 5, texte: 'Excellent travail, très professionnelle et ponctuelle.', date: 'Oct 2026' },
-              { nom: 'Sara K.', note: 5, texte: 'Je recommande vivement, résultat magnifique !', date: 'Sep 2026' },
-              { nom: 'Imane L.', note: 4, texte: 'Très satisfaite, je reviendrai.', date: 'Sep 2026' },
-            ].map((avis, i) => (
-              <div key={i} style={{ background: '#fff', borderRadius: '14px', padding: '16px', border: '1px solid #f0ebe4' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: 700, color: COLORS.anthracite }}>{avis.nom}</span>
-                  <span style={{ color: '#888', fontSize: '12px' }}>{avis.date}</span>
-                </div>
-                <div style={{ marginBottom: '8px' }}>{stars(avis.note)}</div>
-                <p style={{ color: '#555', fontSize: '14px', lineHeight: '1.5' }}>{avis.texte}</p>
-              </div>
-            ))}
+          <div style={{ textAlign: 'center', color: '#bbb', paddingTop: 40 }}>
+            <div style={{ fontSize: 40 }}>⭐</div>
+            <p style={{ marginTop: 12 }}>Aucun avis pour l'instant</p>
           </div>
         )}
       </div>
-    </main>
+    </div>
   )
 }
