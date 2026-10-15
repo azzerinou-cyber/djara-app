@@ -95,6 +95,7 @@ export default function ServiceForm({ service }: { service?: EditableService }) 
   const [photos, setPhotos] = useState<Photo[]>((service?.photo_urls ?? []).map(url => ({ kind: 'existing', url })))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   useEffect(() => {
     supabase
@@ -140,6 +141,38 @@ export default function ServiceForm({ service }: { service?: EditableService }) 
     const photo = photos[index]
     if (photo.kind === 'new') URL.revokeObjectURL(photo.preview)
     setPhotos(photos.filter((_, i) => i !== index))
+  }
+
+  async function handleDelete() {
+    if (!user || !service) return
+    setLoading(true)
+    setError('')
+
+    const { data, error: deleteError } = await supabase
+      .from('services')
+      .delete()
+      .eq('id', service.id)
+      .eq('provider_id', user.id)
+      .select('id')
+
+    if (deleteError || !data?.length) {
+      setError(
+        deleteError?.code === '23503'
+          ? 'Ce service est lié à des réservations, conversations ou signalements : il ne peut pas être supprimé.'
+          : deleteError
+            ? 'Erreur lors de la suppression : ' + deleteError.message
+            : 'Suppression refusée : ce service ne vous appartient pas.'
+      )
+      setConfirmDelete(false)
+      setLoading(false)
+      return
+    }
+
+    // Photos enregistrées en base : suppression du stockage, non bloquante
+    const paths = (service.photo_urls ?? []).map(storagePath).filter((p): p is string => Boolean(p))
+    if (paths.length) await supabase.storage.from(PHOTOS_BUCKET).remove(paths)
+
+    router.push('/profil')
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -375,6 +408,39 @@ export default function ServiceForm({ service }: { service?: EditableService }) 
             </button>
           )}
         </form>
+
+        {isEdit && (
+          <div style={{ marginTop: '16px', background: '#fff3f3', border: '1px solid #ffcccc', borderRadius: '16px', padding: '16px' }}>
+            {confirmDelete ? (
+              <>
+                <p style={{ color: '#c0392b', fontSize: '14px', fontWeight: 600, margin: '0 0 12px' }}>
+                  Supprimer définitivement ce service et ses photos ? Cette action est irréversible.
+                </p>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button type="button" onClick={handleDelete} disabled={loading} style={{
+                    flex: 1, padding: '12px', background: '#e53935', color: '#fff', border: 'none', borderRadius: '10px',
+                    fontSize: '14px', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
+                  }}>
+                    {loading ? 'Suppression...' : 'Oui, supprimer'}
+                  </button>
+                  <button type="button" onClick={() => setConfirmDelete(false)} disabled={loading} style={{
+                    flex: 1, padding: '12px', background: '#fff', color: '#59364A', border: '1px solid #e0d8d0', borderRadius: '10px',
+                    fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+                  }}>
+                    Non, garder
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button type="button" onClick={() => setConfirmDelete(true)} disabled={loading} style={{
+                width: '100%', padding: '12px', background: 'none', border: 'none',
+                color: '#e53935', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+              }}>
+                🗑 Supprimer ce service
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </main>
   )
