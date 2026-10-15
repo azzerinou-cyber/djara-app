@@ -115,6 +115,23 @@ export default function ProfilClient() {
   const [selectedImage, setSelectedImage] = useState<PortfolioImage | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [contactLoading, setContactLoading] = useState(false)
+
+  const handleContact = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push('/connexion'); return }
+    if (!profile) return
+    setContactLoading(true)
+    try {
+      const { data, error } = await supabase.rpc('get_or_create_conversation', { other_user_id: profile.id })
+      if (error) throw error
+      router.push('/messages?conv=' + data)
+    } catch {
+      alert('Impossible d\'ouvrir la conversation. Réessayez.')
+    } finally {
+      setContactLoading(false)
+    }
+  }
 
   const fetchProfile = useCallback(async () => {
     if (!id) return
@@ -277,11 +294,19 @@ export default function ProfilClient() {
 
       {/* CTA */}
       <div style={{ padding: '0 20px 20px', display: 'flex', gap: 10 }}>
-        <button style={{ flex: 1, background: '#fff', border: `1.5px solid ${COLORS.prune}`, color: COLORS.prune, borderRadius: 14, padding: '13px', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
-          {tx.contacter}
+        <button
+          onClick={handleContact}
+          disabled={contactLoading}
+          style={{ flex: 1, background: '#fff', border: `1.5px solid ${COLORS.prune}`, color: COLORS.prune, borderRadius: 14, padding: '13px', fontWeight: 600, fontSize: 14, cursor: contactLoading ? 'not-allowed' : 'pointer', opacity: contactLoading ? 0.7 : 1 }}
+        >
+          {contactLoading ? '…' : tx.contacter}
         </button>
-        <button style={{ flex: 1, background: COLORS.terracotta, border: 'none', color: '#fff', borderRadius: 14, padding: '13px', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
-          {tx.demanderPrestation}
+        <button
+          onClick={handleContact}
+          disabled={contactLoading}
+          style={{ flex: 1, background: COLORS.terracotta, border: 'none', color: '#fff', borderRadius: 14, padding: '13px', fontWeight: 600, fontSize: 14, cursor: contactLoading ? 'not-allowed' : 'pointer', opacity: contactLoading ? 0.7 : 1 }}
+        >
+          {contactLoading ? '…' : tx.demanderPrestation}
         </button>
       </div>
 
