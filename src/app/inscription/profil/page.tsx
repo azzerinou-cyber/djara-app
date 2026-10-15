@@ -274,25 +274,74 @@ export default function InscriptionProfilPage() {
         {/* Champs prestataire uniquement */}
         {!isCherche && (
           <>
-            <fieldset style={{ border: 'none', padding: 0, margin: '0 0 16px' }}>
-              <legend style={{ ...lbl, padding: 0 }}>Type de profil *</legend>
-              <div style={{ display: 'flex', gap: 12 }}>
-                {[{ value: 'particuliere', icon: '👤', label: 'Particulière' }, { value: 'professionnelle', icon: '💼', label: 'Professionnelle' }].map(opt => {
-                  const sel = form.profile_type === opt.value
+            {/* ── Sélecteur type de profil ── */}
+            <fieldset style={{ border: 'none', padding: 0, margin: '0 0 20px' }}>
+              <legend style={{ ...lbl, padding: 0, marginBottom: 10 }}>Type de profil *</legend>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+                {/* Carte Particulière */}
+                {(['particuliere', 'professionnelle'] as const).map(type => {
+                  const sel = form.profile_type === type
+                  const isParticuliere = type === 'particuliere'
+                  const features = isParticuliere
+                    ? ['Services à la personne', 'Contact direct par message', 'Profil gratuit complet', 'Évaluations clients']
+                    : ['Tout du profil particulière', 'Envoi de devis personnalisés', 'Nom d\'entreprise affiché', 'Badge « Professionnelle »']
                   return (
-                    <label key={opt.value} style={{
-                      flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                      padding: '14px 10px', borderRadius: 12, cursor: 'pointer',
+                    <label key={type} style={{
+                      display: 'flex', gap: 14, padding: '16px', borderRadius: 14, cursor: 'pointer',
                       border: `2px solid ${sel ? '#59364A' : '#e8ddd6'}`,
                       background: sel ? '#fdf6f9' : '#fff',
-                      color: sel ? '#59364A' : '#292929',
-                      fontWeight: sel ? 700 : 500, fontSize: 14, position: 'relative',
+                      boxShadow: sel ? '0 4px 16px rgba(89,54,74,0.12)' : '0 2px 6px rgba(0,0,0,0.04)',
+                      transition: 'all 0.15s',
                     }}>
-                      <input type="radio" name="profile_type" value={opt.value} checked={sel}
-                        onChange={() => setForm({ ...form, profile_type: opt.value as 'particuliere' | 'professionnelle' })}
+                      <input type="radio" name="profile_type" value={type} checked={sel}
+                        onChange={() => setForm({ ...form, profile_type: type })}
                         style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }} />
-                      <span style={{ fontSize: 22 }}>{opt.icon}</span>
-                      {opt.label}
+
+                      {/* Icône */}
+                      <div style={{
+                        width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: sel ? '#59364A' : '#f5f0ee', fontSize: 20,
+                      }}>
+                        {isParticuliere ? '👤' : '💼'}
+                      </div>
+
+                      {/* Contenu */}
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                          <span style={{ fontWeight: 700, fontSize: 15, color: sel ? '#59364A' : '#292929' }}>
+                            {isParticuliere ? 'Particulière' : 'Professionnelle'}
+                          </span>
+                          {!isParticuliere && (
+                            <span style={{
+                              background: '#C77D69', color: '#fff', fontSize: 10,
+                              fontWeight: 700, padding: '2px 7px', borderRadius: 20,
+                            }}>
+                              PRO
+                            </span>
+                          )}
+                          {sel && (
+                            <span style={{ marginLeft: 'auto', color: '#59364A', fontSize: 16 }}>✓</span>
+                          )}
+                        </div>
+                        <p style={{ color: '#888', fontSize: 12, margin: '0 0 8px', lineHeight: 1.5 }}>
+                          {isParticuliere
+                            ? 'Idéal pour proposer vos compétences en toute simplicité, sans structure formelle.'
+                            : 'Pour les entrepreneures ayant une activité structurée ou un registre de commerce.'}
+                        </p>
+                        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                          {features.map(f => (
+                            <li key={f} style={{ fontSize: 12, color: sel ? '#59364A' : '#aaa', display: 'flex', alignItems: 'center', gap: 5 }}>
+                              <span style={{ color: isParticuliere && sel ? '#A8B5A2' : sel ? '#C77D69' : '#ddd' }}>✔</span>
+                              {f === 'Envoi de devis personnalisés'
+                                ? <strong style={{ color: sel ? '#C77D69' : '#aaa' }}>{f}</strong>
+                                : f}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </label>
                   )
                 })}
