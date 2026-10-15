@@ -557,7 +557,7 @@ function MessagesPage() {
   const renderConversation = () => {
     if (!activeConvId || !activeOther) return null;
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden' }}>
 
         {/* Header */}
         <div style={{ background: '#59364A', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
@@ -579,7 +579,7 @@ function MessagesPage() {
         </div>
 
         {/* Messages */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 8px', background: '#FAF7F2', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '16px 16px 8px', background: '#FAF7F2', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {loadingMsgs ? (
             <div style={{ textAlign: 'center', color: '#bbb', marginTop: 40, fontSize: 14 }}>Chargement…</div>
           ) : messages.length === 0 ? (
@@ -668,15 +668,15 @@ function MessagesPage() {
   // ─── Layout ───────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#FAF7F2', fontFamily: "'Segoe UI', system-ui, sans-serif", display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100dvh', background: '#FAF7F2', fontFamily: "'Segoe UI', system-ui, sans-serif", display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
       {!activeConvId && (
-        <header style={{ background: '#59364A', padding: '16px', position: 'sticky', top: 0, zIndex: 100 }}>
+        <header style={{ background: '#59364A', padding: '16px', flexShrink: 0 }}>
           <h1 style={{ color: '#FAF7F2', margin: 0, fontSize: 20, fontWeight: 700 }}>Messages</h1>
         </header>
       )}
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: activeConvId ? '100dvh' : undefined }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
         {activeConvId ? renderConversation() : renderConvList()}
       </div>
 
