@@ -1,8 +1,18 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { supabase } from '@/lib/supabase'
+
+const SLUG_TO_ICON: Record<string, string> = {
+  'cuisine': '🍳',
+  'beaute': '💄',
+  'education': '📚',
+  'couture': '🧵',
+  'digital': '💻',
+  'evenements': '🎉',
+}
 
 // Leaflet a besoin de `window` : chargement côté client uniquement
 const MapView = dynamic(() => import('@/components/MapView'), {
@@ -46,14 +56,19 @@ const profileCategories = (p: ProfileResult) => {
 }
 
 export default function RechercherPage() {
+  const searchParams = useSearchParams()
   const [profiles, setProfiles] = useState<ProfileResult[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? '')
   const [wilaya, setWilaya] = useState('')
   const [commune, setCommune] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
+  const [catIcon] = useState(() => {
+    const slug = searchParams.get('categorie')
+    return slug ? (SLUG_TO_ICON[slug] ?? '') : ''
+  })
 
   useEffect(() => {
     supabase
@@ -111,7 +126,7 @@ export default function RechercherPage() {
   return (
     <main style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
       <h1 style={{ color: '#59364A', marginBottom: '24px', fontSize: '24px', fontWeight: 700 }}>
-        Rechercher une prestataire
+        {catIcon ? `${catIcon} ` : ''}Rechercher une prestataire
       </h1>
 
       {/* Barre de recherche */}
