@@ -61,7 +61,7 @@ export default function HomePage() {
         .limit(6);
 
       if (!error && data) {
-        setServices(data as Service[]);
+        setServices(data as unknown as Service[]);
         setTotalServices(count ?? 0);
       }
 
