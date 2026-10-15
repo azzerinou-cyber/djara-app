@@ -17,7 +17,7 @@ interface Service {
   provider_id: string;
   profiles?: {
     display_name: string | null;
-  } | null;
+  }[] | null;
 }
 
 const CATEGORIES = [
@@ -276,9 +276,9 @@ export default function HomePage() {
                       <div style={{ color: '#C77D69', fontSize: 13, fontWeight: 800 }}>
                         {formatPrix(svc.price_min, svc.price_max)}
                       </div>
-                      {svc.profiles?.display_name && (
+                      {svc.profiles?.[0]?.display_name && (
                         <div style={{ color: '#bbb', fontSize: 11, marginTop: 2 }}>
-                          par {svc.profiles.display_name}
+                          par {svc.profiles[0].display_name}
                         </div>
                       )}
                     </div>
