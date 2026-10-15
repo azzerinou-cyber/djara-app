@@ -617,25 +617,25 @@ function MessagesPage() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Barre de saisie — une seule ligne, flexShrink:0, ne disparaît jamais */}
-        <div style={{
-          background: '#fff', borderTop: '1px solid #e8e1d9',
-          flexShrink: 0, padding: '10px 12px 14px',
-          display: 'flex', alignItems: 'flex-end', gap: 8,
-        }}>
-          {/* Bouton devis — icône à gauche */}
-          <button
-            onClick={() => setShowDevisForm(true)}
-            title="Envoyer un devis"
-            style={{
-              width: 42, height: 42, borderRadius: '50%', border: '2px solid #C77D69',
-              background: '#f3edf0', color: '#59364A', fontSize: 20,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', flexShrink: 0,
-            }}
-          >
-            📋
-          </button>
+        {/* Zone saisie complète — ne disparaît jamais */}
+        <div style={{ background: '#fff', borderTop: '1px solid #e8e1d9', flexShrink: 0 }}>
+          {/* Bouton devis — visible en haut de la zone */}
+          <div style={{ padding: '8px 12px 0' }}>
+            <button
+              onClick={() => setShowDevisForm(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: '#C77D69', color: '#fff', border: 'none',
+                borderRadius: 20, padding: '7px 16px', fontSize: 13, fontWeight: 600,
+                cursor: 'pointer', height: 36,
+              }}
+            >
+              <span style={{ fontSize: 15 }}>📋</span>
+              <span>Envoyer un devis</span>
+            </button>
+          </div>
+          {/* Ligne textarea + envoyer */}
+          <div style={{ padding: '6px 12px 14px', display: 'flex', alignItems: 'flex-end', gap: 8 }}>
           {/* Textarea */}
           <textarea
             ref={inputRef}
@@ -664,6 +664,7 @@ function MessagesPage() {
           >
             {sending ? '…' : '↑'}
           </button>
+          </div>
         </div>
       </div>
     );
