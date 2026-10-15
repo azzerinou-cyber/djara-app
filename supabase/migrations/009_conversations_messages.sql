@@ -10,15 +10,10 @@ CREATE TABLE IF NOT EXISTS public.conversations (
   user_b_id       UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   last_message_at TIMESTAMPTZ,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT conversations_no_self_chat CHECK (user_a_id <> user_b_id)
+  CONSTRAINT conversations_no_self_chat CHECK (user_a_id <> user_b_id),
+  -- Unicité simple : la fonction get_or_create_conversation garantit l'ordre (a < b)
+  CONSTRAINT conversations_unique_pair UNIQUE (user_a_id, user_b_id)
 );
-
--- Index unique déterministe pour éviter les doublons (A,B) == (B,A)
-CREATE UNIQUE INDEX IF NOT EXISTS conversations_ordered_pair_idx
-  ON public.conversations (
-    LEAST(user_a_id::text, user_b_id::text),
-    GREATEST(user_a_id::text, user_b_id::text)
-  );
 
 CREATE INDEX IF NOT EXISTS conversations_user_a_idx ON public.conversations (user_a_id, last_message_at DESC);
 CREATE INDEX IF NOT EXISTS conversations_user_b_idx ON public.conversations (user_b_id, last_message_at DESC);
