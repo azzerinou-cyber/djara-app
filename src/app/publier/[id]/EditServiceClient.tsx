@@ -54,7 +54,7 @@ export default function EditServiceClient() {
         <p style={{ color: '#888', fontSize: '14px', marginBottom: '24px' }}>
           {forbidden ? 'Seule la propriétaire de ce service peut le modifier.' : "Ce service n'existe pas ou a été supprimé."}
         </p>
-        <Link href="/profil" style={{ display: 'inline-block', background: '#59364A', color: '#fff', borderRadius: '10px', padding: '14px 24px', fontWeight: 700, textDecoration: 'none' }}>
+        <Link href="/mon-profil" style={{ display: 'inline-block', background: '#59364A', color: '#fff', borderRadius: '10px', padding: '14px 24px', fontWeight: 700, textDecoration: 'none' }}>
           Retour à mon profil
         </Link>
       </div>
