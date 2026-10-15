@@ -30,6 +30,17 @@ type ProviderRow = {
   services: { is_active: boolean; categories: { name_fr: string; icon: string | null } | null }[] | null
 }
 
+/** Type accepté par la prop externalProviders de MapView.
+ *  latitude/longitude peuvent être null — les entrées nulles sont filtrées automatiquement. */
+export type MapProviderInput = {
+  id: string
+  display_name: string
+  wilaya: string | null
+  latitude: number | null
+  longitude: number | null
+  services: { is_active: boolean; categories: { name_fr: string; icon: string | null } | null }[] | null
+}
+
 // Marqueur prune DJARA en SVG : évite les icônes PNG par défaut de Leaflet,
 // dont les chemins cassent avec les bundlers.
 const markerIcon = L.divIcon({
@@ -43,12 +54,46 @@ const markerIcon = L.divIcon({
   popupAnchor: [0, -38],
 })
 
-export default function MapView() {
+type MapViewProps = {
+  /** Résultats filtrés passés depuis la page de recherche.
+   *  Quand fournis, la carte affiche ces prestataires au lieu de tout charger.
+   *  Les entrées avec latitude/longitude null sont ignorées automatiquement. */
+  externalProviders?: MapProviderInput[]
+}
+
+export default function MapView({ externalProviders }: MapViewProps) {
   const [providers, setProviders] = useState<Provider[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  // Convertit une ProviderRow (format Supabase) en Provider (format carte)
+  function toProvider(row: ProviderRow): Provider {
+    const category = row.services?.find(s => s.is_active && s.categories)?.categories
+    return {
+      id: row.id,
+      display_name: row.display_name,
+      wilaya: row.wilaya,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      category: category ? `${category.icon ?? ''} ${category.name_fr}`.trim() : null,
+    }
+  }
+
+  // Si des résultats filtrés sont fournis depuis l'extérieur, les utiliser directement
   useEffect(() => {
+    if (externalProviders !== undefined) {
+      setProviders(
+        externalProviders
+          .filter((r): r is MapProviderInput & { latitude: number; longitude: number } =>
+            r.latitude != null && r.longitude != null
+          )
+          .map(toProvider)
+      )
+      setLoading(false)
+      return
+    }
+
+    // Sinon, chargement autonome de tous les profils géolocalisés
     let active = true
 
     async function load() {
@@ -63,26 +108,15 @@ export default function MapView() {
       if (fetchError) {
         setError('Impossible de charger la carte.')
       } else {
-        setProviders(
-          (data as unknown as ProviderRow[]).map(row => {
-            const category = row.services?.find(s => s.is_active && s.categories)?.categories
-            return {
-              id: row.id,
-              display_name: row.display_name,
-              wilaya: row.wilaya,
-              latitude: row.latitude,
-              longitude: row.longitude,
-              category: category ? `${category.icon ?? ''} ${category.name_fr}`.trim() : null,
-            }
-          })
-        )
+        setProviders((data as unknown as ProviderRow[]).map(toProvider))
       }
       setLoading(false)
     }
 
     load()
     return () => { active = false }
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalProviders])
 
   return (
     <div style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', border: '1px solid #f0ebe4' }}>

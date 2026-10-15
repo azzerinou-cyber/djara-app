@@ -39,7 +39,7 @@ export default function DevisPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     supabase
       .from('devis')
-      .select('id, service_title, description, price_amount, currency, duration, valid_until, notes, status, created_at, profiles ( display_name, business_name, wilaya, commune, phone )')
+      .select('id, service_title, description, price_amount, currency, duration, valid_until, notes, status, created_at, profiles!provider_id ( display_name, business_name, wilaya, commune, phone )')
       .eq('id', params.id)
       .single()
       .then(({ data, error: e }) => {

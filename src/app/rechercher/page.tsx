@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { supabase } from '@/lib/supabase'
 import BottomNav from '@/components/BottomNav'
+import type { MapProviderInput } from '@/components/MapView'
 
 const SLUG_TO_ICON: Record<string, string> = {
   'cuisine': '🍳',
@@ -40,7 +41,9 @@ interface ProfileResult {
   commune: string | null
   bio: string | null
   trust_level: number
-  services: { category_id: string | null; categories: { name_fr: string; icon: string | null } | null }[] | null
+  latitude: number | null
+  longitude: number | null
+  services: { is_active: boolean; category_id: string | null; categories: { name_fr: string; icon: string | null } | null }[] | null
 }
 
 // Retire les caractères qui cassent la syntaxe des filtres PostgREST (or, ilike)
@@ -90,8 +93,8 @@ function RechercherContent() {
     let query = supabase
       .from('profiles')
       .select(`
-        id, display_name, business_name, wilaya, commune, bio, trust_level,
-        ${servicesEmbed} ( category_id, categories ( name_fr, icon ) )
+        id, display_name, business_name, wilaya, commune, bio, trust_level, latitude, longitude,
+        ${servicesEmbed} ( is_active, category_id, categories ( name_fr, icon ) )
       `)
       .eq('is_active', true)
       .neq('profile_type', 'particuliere')
@@ -198,9 +201,9 @@ function RechercherContent() {
         ))}
       </div>
 
-      {/* Carte des prestataires */}
+      {/* Carte des prestataires — synchronisée avec les filtres actifs */}
       <div style={{ marginBottom: '24px' }}>
-        <MapView />
+        <MapView externalProviders={profiles as MapProviderInput[]} />
       </div>
 
       {/* Résultats */}
