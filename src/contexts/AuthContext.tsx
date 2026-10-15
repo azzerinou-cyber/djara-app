@@ -4,9 +4,12 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 
+export type ProfileType = 'particuliere' | 'professionnelle'
+
 export type Profile = {
   id: string
   display_name: string
+  profile_type: ProfileType | null
   phone: string | null
   wilaya: string | null
   commune: string | null
