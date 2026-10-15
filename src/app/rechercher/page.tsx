@@ -20,39 +20,39 @@ interface Category {
   icon: string | null
 }
 
-interface ServiceResult {
+interface ProfileResult {
   id: string
-  provider_id: string
-  title_fr: string
-  description_fr: string | null
-  price_min: number | null
-  price_max: number | null
-  price_unit: string | null
+  display_name: string
+  business_name: string | null
   wilaya: string | null
   commune: string | null
-  categories: { name_fr: string; icon: string | null } | null
-  profiles: {
-    display_name: string
-    trust_level: number
-  } | null
+  bio: string | null
+  trust_level: number
+  services: { category_id: string | null; categories: { name_fr: string; icon: string | null } | null }[] | null
 }
 
-// Formatage prix
-const formatPrix = (s: ServiceResult) => {
-  if (!s.price_min && !s.price_max) return null
-  const unit = s.price_unit ? ` / ${s.price_unit}` : ''
-  if (s.price_min && s.price_max && s.price_min !== s.price_max) {
-    return `${s.price_min.toLocaleString()} – ${s.price_max.toLocaleString()} DA${unit}`
+// Retire les caractères qui cassent la syntaxe des filtres PostgREST (or, ilike)
+const clean = (value: string) => value.trim().replace(/[,()*%\\]/g, ' ').trim()
+
+// Catégories distinctes des annonces d'une prestataire
+const profileCategories = (p: ProfileResult) => {
+  const seen = new Map<string, string>()
+  for (const s of p.services ?? []) {
+    if (s.categories && !seen.has(s.categories.name_fr)) {
+      seen.set(s.categories.name_fr, `${s.categories.icon ?? ''} ${s.categories.name_fr}`.trim())
+    }
   }
-  return `${(s.price_min ?? s.price_max ?? 0).toLocaleString()} DA${unit}`
+  return [...seen.values()]
 }
 
 export default function RechercherPage() {
-  const [services, setServices] = useState<ServiceResult[]>([])
+  const [profiles, setProfiles] = useState<ProfileResult[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
+  const [wilaya, setWilaya] = useState('')
+  const [commune, setCommune] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
 
   useEffect(() => {
@@ -64,60 +64,84 @@ export default function RechercherPage() {
       .then(({ data }) => setCategories(data ?? []))
   }, [])
 
-  const fetchServices = async () => {
+  const fetchProfiles = async () => {
     setLoading(true)
     setError('')
+
+    // La catégorie vient des annonces : jointure interne seulement si on filtre dessus
+    const servicesEmbed = selectedCategory ? 'services!inner' : 'services'
     let query = supabase
-      .from('services')
+      .from('profiles')
       .select(`
-        id, provider_id, title_fr, description_fr, price_min, price_max, price_unit, wilaya, commune,
-        categories ( name_fr, icon ),
-        profiles ( display_name, trust_level )
+        id, display_name, business_name, wilaya, commune, bio, trust_level,
+        ${servicesEmbed} ( category_id, categories ( name_fr, icon ) )
       `)
       .eq('is_active', true)
-      .order('created_at', { ascending: false })
+      .eq('is_provider', true)
+      .order('trust_level', { ascending: false })
       .limit(20)
 
-    if (search.trim()) query = query.ilike('title_fr', `%${search.trim()}%`)
-    if (selectedCategory) query = query.eq('category_id', selectedCategory)
+    const term = clean(search)
+    if (term) query = query.or(`display_name.ilike.*${term}*,business_name.ilike.*${term}*,bio.ilike.*${term}*`)
+    if (clean(wilaya)) query = query.ilike('wilaya', `%${clean(wilaya)}%`)
+    if (clean(commune)) query = query.ilike('commune', `%${clean(commune)}%`)
+    if (selectedCategory) query = query.eq('services.category_id', selectedCategory)
 
     const { data, error: fetchError } = await query
     if (fetchError) {
-      setError('Impossible de charger les services.')
-      setServices([])
+      setError('Impossible de charger les prestataires.')
+      setProfiles([])
     } else {
-      setServices((data ?? []) as unknown as ServiceResult[])
+      setProfiles((data ?? []) as unknown as ProfileResult[])
     }
     setLoading(false)
   }
 
   useEffect(() => {
-    fetchServices()
+    fetchProfiles()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory])
+
+  const inputStyle = {
+    flex: 1, minWidth: '140px', padding: '12px 16px',
+    border: '1.5px solid #e0d8d0', borderRadius: '12px',
+    fontSize: '15px', outline: 'none', background: '#fff',
+  }
 
   return (
     <main style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
       <h1 style={{ color: '#59364A', marginBottom: '24px', fontSize: '24px', fontWeight: 700 }}>
-        Rechercher un service
+        Rechercher une prestataire
       </h1>
 
       {/* Barre de recherche */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+      <form
+        onSubmit={e => { e.preventDefault(); fetchProfiles() }}
+        style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}
+      >
         <input
           type="text"
-          placeholder="Que recherchez-vous ?"
+          placeholder="Nom, savoir-faire..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && fetchServices()}
-          style={{
-            flex: 1, minWidth: '200px', padding: '12px 16px',
-            border: '1.5px solid #e0d8d0', borderRadius: '12px',
-            fontSize: '15px', outline: 'none', background: '#fff',
-          }}
+          style={{ ...inputStyle, minWidth: '200px' }}
+        />
+        <input
+          type="text"
+          placeholder="Wilaya"
+          value={wilaya}
+          onChange={e => setWilaya(e.target.value)}
+          style={inputStyle}
+        />
+        <input
+          type="text"
+          placeholder="Commune"
+          value={commune}
+          onChange={e => setCommune(e.target.value)}
+          style={inputStyle}
         />
         <button
-          onClick={fetchServices}
+          type="submit"
           style={{
             padding: '12px 24px', background: '#59364A', color: '#fff',
             border: 'none', borderRadius: '12px', fontWeight: 600,
@@ -126,7 +150,7 @@ export default function RechercherPage() {
         >
           Rechercher
         </button>
-      </div>
+      </form>
 
       {/* Filtres catégories */}
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
@@ -169,63 +193,57 @@ export default function RechercherPage() {
         <div style={{ background: '#fff0f0', border: '1px solid #ffcccc', borderRadius: '12px', padding: '16px', color: '#c0392b', fontSize: '14px', textAlign: 'center' }}>
           {error}
         </div>
-      ) : services.length === 0 ? (
+      ) : profiles.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 24px', color: '#888' }}>
           <p style={{ fontSize: '40px', marginBottom: '12px' }}>🔍</p>
-          <p style={{ fontSize: '16px' }}>Aucun service trouvé</p>
-          <p style={{ fontSize: '14px', marginTop: '8px' }}>Essayez une autre catégorie ou un autre terme.</p>
+          <p style={{ fontSize: '16px' }}>Aucune prestataire trouvée</p>
+          <p style={{ fontSize: '14px', marginTop: '8px' }}>Essayez une autre catégorie, wilaya ou commune.</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {services.map(service => (
+          {profiles.map(profile => (
             <div
-              key={service.id}
+              key={profile.id}
               style={{
                 background: '#fff', borderRadius: '16px', padding: '20px',
                 border: '1px solid #f0ebe4', boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                <div>
-                  <h3 style={{ color: '#292929', fontSize: '16px', fontWeight: 600, marginBottom: '4px' }}>
-                    {service.title_fr}
-                  </h3>
-                  <p style={{ color: '#888', fontSize: '13px' }}>
-                    {[service.profiles?.display_name, [service.commune, service.wilaya].filter(Boolean).join(', ')].filter(Boolean).join(' · ')}
-                  </p>
-                </div>
-                {formatPrix(service) && (
-                  <span style={{
-                    background: '#FAF7F2', color: '#59364A', padding: '6px 12px',
-                    borderRadius: '20px', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap',
-                  }}>
-                    {formatPrix(service)}
-                  </span>
-                )}
+              <div style={{ marginBottom: '8px' }}>
+                <h3 style={{ color: '#292929', fontSize: '16px', fontWeight: 600, marginBottom: '4px' }}>
+                  {profile.display_name}
+                  {profile.business_name && (
+                    <span style={{ color: '#888', fontWeight: 400, fontSize: '14px' }}> · {profile.business_name}</span>
+                  )}
+                </h3>
+                <p style={{ color: '#888', fontSize: '13px' }}>
+                  📍 {[profile.commune, profile.wilaya].filter(Boolean).join(', ') || 'Localisation non renseignée'}
+                </p>
               </div>
 
-              {service.description_fr && (
+              {profile.bio && (
                 <p style={{ color: '#555', fontSize: '14px', lineHeight: '1.5', marginBottom: '12px' }}>
-                  {service.description_fr.length > 120
-                    ? service.description_fr.slice(0, 120) + '…'
-                    : service.description_fr}
+                  {profile.bio.length > 120 ? profile.bio.slice(0, 120) + '…' : profile.bio}
                 </p>
               )}
 
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                {service.categories && (
-                  <span style={{
-                    background: '#f5f0ee', color: '#C77D69', padding: '4px 10px',
-                    borderRadius: '10px', fontSize: '12px',
-                  }}>
-                    {service.categories.icon ? `${service.categories.icon} ` : ''}{service.categories.name_fr}
+                {profileCategories(profile).map(cat => (
+                  <span
+                    key={cat}
+                    style={{
+                      background: '#f5f0ee', color: '#C77D69', padding: '4px 10px',
+                      borderRadius: '10px', fontSize: '12px',
+                    }}
+                  >
+                    {cat}
                   </span>
-                )}
-                {(service.profiles?.trust_level ?? 0) >= 2 && (
+                ))}
+                {profile.trust_level >= 2 && (
                   <span style={{ fontSize: '12px', color: '#A8B5A2' }}>✓ Vérifiée</span>
                 )}
                 <a
-                  href={`/profil/${service.provider_id}`}
+                  href={`/profil/${profile.id}`}
                   style={{
                     marginLeft: 'auto', padding: '8px 16px', background: '#59364A',
                     color: '#fff', borderRadius: '10px', fontSize: '13px',
