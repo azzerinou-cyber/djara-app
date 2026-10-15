@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+import BottomNav from '@/components/BottomNav';
 
 type Lang = 'fr' | 'ar';
 
@@ -38,18 +40,22 @@ const VALEURS = [
 
 export default function HomePage() {
   const router = useRouter();
+  const { profile: authProfile } = useAuth();
   const [lang, setLang] = useState<Lang>('fr');
   const [search, setSearch] = useState('');
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userPrenom, setUserPrenom] = useState<string | null>(null);
   const [totalServices, setTotalServices] = useState(0);
   const isRTL = lang === 'ar';
 
-  const fetchData = useCallback(async () => {
+  // Prénom depuis le contexte auth — pas de double fetch
+  const userPrenom = authProfile?.display_name
+    ? authProfile.display_name.split(' ')[0]
+    : null;
+
+  const fetchServices = useCallback(async () => {
     setLoading(true);
     try {
-      // Services récents actifs
       const { data, error, count } = await supabase
         .from('services')
         .select(`
@@ -64,19 +70,6 @@ export default function HomePage() {
         setServices(data as unknown as Service[]);
         setTotalServices(count ?? 0);
       }
-
-      // Utilisatrice connectée
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('display_name')
-          .eq('id', user.id)
-          .single();
-        if (profile?.display_name) {
-          setUserPrenom(profile.display_name.split(' ')[0]);
-        }
-      }
     } catch {
       // silently fail
     } finally {
@@ -84,7 +77,7 @@ export default function HomePage() {
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { fetchServices(); }, [fetchServices]);
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
@@ -296,7 +289,7 @@ export default function HomePage() {
             <div style={{ color: '#FAF7F2', fontSize: 14, fontWeight: 700 }}>{lang === 'fr' ? 'Je cherche' : 'أبحث'}</div>
             <div style={{ color: 'rgba(250,247,242,0.7)', fontSize: 11, marginTop: 2 }}>{lang === 'fr' ? 'un service' : 'عن خدمة'}</div>
           </Link>
-          <Link href={userPrenom ? '/publier' : '/auth/inscription'} style={{ background: 'linear-gradient(135deg, #C77D69, #e09080)', borderRadius: 16, padding: '18px 14px', textAlign: 'center', textDecoration: 'none', display: 'block' }}>
+          <Link href={authProfile ? '/publier' : '/auth/inscription'} style={{ background: 'linear-gradient(135deg, #C77D69, #e09080)', borderRadius: 16, padding: '18px 14px', textAlign: 'center', textDecoration: 'none', display: 'block' }}>
             <div style={{ fontSize: 26, marginBottom: 5 }}>✨</div>
             <div style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>{lang === 'fr' ? 'Je propose' : 'أقدم'}</div>
             <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginTop: 2 }}>{lang === 'fr' ? 'mes talents' : 'مواهبي'}</div>
@@ -319,21 +312,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Nav bas */}
-      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #f0e8e0', display: 'flex', justifyContent: 'space-around', padding: '10px 0 14px', boxShadow: '0 -4px 20px rgba(89,54,74,0.08)', zIndex: 100 }}>
-        {[
-          { icon: '🏠', fr: 'Accueil', ar: 'الرئيسية', href: '/', active: true },
-          { icon: '🔍', fr: 'Rechercher', ar: 'بحث', href: '/rechercher', active: false },
-          { icon: '➕', fr: 'Publier', ar: 'نشر', href: userPrenom ? '/publier' : '/auth/connexion', active: false },
-          { icon: '💬', fr: 'Messages', ar: 'رسائل', href: '/messages', active: false },
-          { icon: '👤', fr: 'Profil', ar: 'حسابي', href: userPrenom ? '/profil' : '/auth/connexion', active: false },
-        ].map((item, i) => (
-          <Link key={i} href={item.href} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, textDecoration: 'none', color: item.active ? '#59364A' : '#bbb' }}>
-            <span style={{ fontSize: 22 }}>{item.icon}</span>
-            <span style={{ fontSize: 10, fontWeight: item.active ? 700 : 400 }}>{lang === 'fr' ? item.fr : item.ar}</span>
-          </Link>
-        ))}
-      </nav>
+      <BottomNav lang={lang} />
     </div>
   );
 }
