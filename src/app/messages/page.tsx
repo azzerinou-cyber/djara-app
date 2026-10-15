@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase';
 import type { RealtimeChannel, RealtimePostgresInsertPayload } from '@supabase/supabase-js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -286,7 +286,6 @@ function QuoteCard({ msg, isMine, onAccept, onRefuse }: QuoteCardProps) {
 // ─── Composant principal ─────────────────────────────────────────────────────
 
 function MessagesPage() {
-  const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
 
