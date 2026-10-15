@@ -375,12 +375,17 @@ export default function ProfilClient() {
                     <span style={{ color: COLORS.prune, fontWeight: 700, fontSize: 14 }}>
                       {formatPrix(svc.price_min, svc.price_max) ?? 'Prix à définir'}
                     </span>
-                    <button style={{
-                      background: COLORS.prune, color: '#fff', border: 'none',
-                      borderRadius: 10, padding: '7px 14px', fontSize: 13,
-                      fontWeight: 600, cursor: 'pointer',
-                    }}>
-                      {tx.prendre_rdv}
+                    <button
+                      onClick={handleContact}
+                      disabled={contactLoading}
+                      style={{
+                        background: COLORS.prune, color: '#fff', border: 'none',
+                        borderRadius: 10, padding: '7px 14px', fontSize: 13,
+                        fontWeight: 600, cursor: contactLoading ? 'not-allowed' : 'pointer',
+                        opacity: contactLoading ? 0.7 : 1,
+                      }}
+                    >
+                      {contactLoading ? '…' : tx.prendre_rdv}
                     </button>
                   </div>
                 </div>
