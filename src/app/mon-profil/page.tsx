@@ -261,9 +261,16 @@ export default function MonProfilPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <span style={{ color: '#59364A', fontWeight: 800, fontSize: 14 }}>{t.mesServices}</span>
-              <Link href="/publier" style={{ background: '#C77D69', color: '#fff', borderRadius: 20, padding: '7px 16px', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
-                {t.ajouterService}
-              </Link>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {profile?.profile_type === 'professionnelle' && (
+                  <Link href="/devis/nouveau" style={{ background: '#59364A', color: '#fff', borderRadius: 20, padding: '7px 14px', fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    📄 Devis
+                  </Link>
+                )}
+                <Link href="/publier" style={{ background: '#C77D69', color: '#fff', borderRadius: 20, padding: '7px 16px', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
+                  {t.ajouterService}
+                </Link>
+              </div>
             </div>
             {mockServices.map(s => (
               <div key={s.id} style={{ background: '#fff', borderRadius: 14, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: `1px solid ${s.actif ? '#f0e8e0' : '#f5f0f0'}` }}>
