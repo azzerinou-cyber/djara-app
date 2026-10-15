@@ -263,8 +263,8 @@ export default function MonProfilPage() {
               <span style={{ color: '#59364A', fontWeight: 800, fontSize: 14 }}>{t.mesServices}</span>
               <div style={{ display: 'flex', gap: 8 }}>
                 {profile?.profile_type === 'professionnelle' && (
-                  <Link href="/devis/nouveau" style={{ background: '#59364A', color: '#fff', borderRadius: 20, padding: '7px 14px', fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    📄 Devis
+                  <Link href="/devis" style={{ background: '#59364A', color: '#fff', borderRadius: 20, padding: '7px 14px', fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    📄 Mes devis
                   </Link>
                 )}
                 <Link href="/publier" style={{ background: '#C77D69', color: '#fff', borderRadius: 20, padding: '7px 16px', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
