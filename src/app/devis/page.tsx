@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -95,9 +96,9 @@ export default function DevisListPage() {
         <p style={{ color: '#888', fontSize: 14, marginBottom: 24 }}>
           Les devis sont disponibles uniquement pour les profils <strong>Professionnelle</strong>.
         </p>
-        <a href="/inscription/profil" style={{ display: 'inline-block', padding: '12px 24px', background: '#59364A', color: '#fff', borderRadius: 12, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+        <Link href="/inscription/profil" style={{ display: 'inline-block', padding: '12px 24px', background: '#59364A', color: '#fff', borderRadius: 12, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
           Passer en mode Professionnelle
-        </a>
+        </Link>
       </main>
     )
   }
@@ -116,13 +117,13 @@ export default function DevisListPage() {
             </p>
           </div>
         </div>
-        <a href="/devis/nouveau" style={{
+        <Link href="/devis/nouveau" style={{
           padding: '10px 16px', background: '#59364A', color: '#fff',
           borderRadius: 12, fontWeight: 700, fontSize: 13, textDecoration: 'none',
           display: 'flex', alignItems: 'center', gap: 6,
         }}>
           + Nouveau
-        </a>
+        </Link>
       </div>
 
       {/* Stats */}
@@ -178,9 +179,9 @@ export default function DevisListPage() {
             {filter === 'tous' ? 'Créez votre premier devis professionnel.' : 'Essayez un autre filtre.'}
           </p>
           {filter === 'tous' && (
-            <a href="/devis/nouveau" style={{ display: 'inline-block', marginTop: 16, padding: '12px 24px', background: '#59364A', color: '#fff', borderRadius: 12, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+            <Link href="/devis/nouveau" style={{ display: 'inline-block', marginTop: 16, padding: '12px 24px', background: '#59364A', color: '#fff', borderRadius: 12, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
               📄 Créer un devis
-            </a>
+            </Link>
           )}
         </div>
       ) : (
@@ -250,13 +251,13 @@ export default function DevisListPage() {
                     </button>
 
                     {/* Voir */}
-                    <a href={`/devis/${d.id}`} style={{
+                    <Link href={`/devis/${d.id}`} style={{
                       padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
                       textDecoration: 'none', border: '1.5px solid #e8ddd6',
                       background: '#fff', color: '#888',
                     }}>
                       👁 Voir
-                    </a>
+                    </Link>
 
                     {/* Marquer accepté / refusé si en attente */}
                     {st === 'sent' && (

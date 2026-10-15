@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
 interface Devis {
@@ -203,7 +204,7 @@ export default function DevisPage({ params }: { params: { id: string } }) {
           <p style={{ color: '#888', fontSize: 13, textAlign: 'center', margin: '0 0 4px' }}>
             Ce devis vous convient ?
           </p>
-          <a
+          <Link
             href={`/messages?devis=${devis.id}`}
             style={{
               display: 'block', padding: '16px', background: '#59364A',
@@ -213,7 +214,7 @@ export default function DevisPage({ params }: { params: { id: string } }) {
             }}
           >
             ✅ Accepter et contacter la prestataire
-          </a>
+          </Link>
           <p style={{ textAlign: 'center', color: '#ccc', fontSize: 11, margin: 0 }}>
             Vous serez redirigée vers la messagerie DJARA.
           </p>

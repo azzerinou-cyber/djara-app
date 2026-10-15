@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, type CSSProperties, type ChangeEvent, type FormEvent, Suspense } from 'react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
@@ -176,13 +177,13 @@ function DevisNouveauContent() {
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <a href="/mon-profil" style={{
+          <Link href="/mon-profil" style={{
             display: 'block', padding: '14px 24px', background: '#59364A',
             color: '#fff', borderRadius: 12, fontWeight: 700, fontSize: 15,
             textDecoration: 'none', textAlign: 'center',
           }}>
             Retour à mon profil
-          </a>
+          </Link>
           <button
             onClick={() => { setSuccess(false); setForm({ client_name: '', service_title: '', description: '', price_amount: '', duration: '', valid_until: '', notes: '' }) }}
             style={{
