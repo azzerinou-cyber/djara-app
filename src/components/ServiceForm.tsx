@@ -172,7 +172,7 @@ export default function ServiceForm({ service }: { service?: EditableService }) 
     const paths = (service.photo_urls ?? []).map(storagePath).filter((p): p is string => Boolean(p))
     if (paths.length) await supabase.storage.from(PHOTOS_BUCKET).remove(paths)
 
-    router.push('/profil')
+    router.push('/mon-profil')
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -271,11 +271,9 @@ export default function ServiceForm({ service }: { service?: EditableService }) 
         return
       }
 
-      // Apparaître dans /rechercher. Non bloquant si ça échoue.
-      if (profile) await supabase.from('profiles').update({ is_provider: true }).eq('id', user.id)
     }
 
-    router.push('/profil')
+    router.push('/mon-profil')
   }
 
   const inputStyle = {
@@ -400,7 +398,7 @@ export default function ServiceForm({ service }: { service?: EditableService }) 
           </button>
 
           {isEdit && (
-            <button type="button" onClick={() => router.push('/profil')} disabled={loading} style={{
+            <button type="button" onClick={() => router.push('/mon-profil')} disabled={loading} style={{
               width: '100%', marginTop: '10px', padding: '12px', background: 'none', border: 'none',
               color: '#999', fontSize: '14px', cursor: 'pointer',
             }}>

@@ -116,11 +116,11 @@ export default function HomePage() {
             {lang === 'fr' ? 'عربي' : 'FR'}
           </button>
           {userPrenom ? (
-            <Link href="/profil" style={{ background: '#59364A', color: '#FAF7F2', borderRadius: 25, padding: '7px 16px', fontSize: 13, textDecoration: 'none', fontWeight: 700 }}>
+            <Link href="/mon-profil" style={{ background: '#59364A', color: '#FAF7F2', borderRadius: 25, padding: '7px 16px', fontSize: 13, textDecoration: 'none', fontWeight: 700 }}>
               {userPrenom}
             </Link>
           ) : (
-            <Link href="/auth/connexion" style={{ background: '#59364A', color: '#FAF7F2', borderRadius: 25, padding: '7px 16px', fontSize: 13, textDecoration: 'none', fontWeight: 700 }}>
+            <Link href="/connexion" style={{ background: '#59364A', color: '#FAF7F2', borderRadius: 25, padding: '7px 16px', fontSize: 13, textDecoration: 'none', fontWeight: 700 }}>
               {lang === 'fr' ? 'Connexion' : 'دخول'}
             </Link>
           )}
