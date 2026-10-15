@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -123,13 +123,13 @@ export default function InscriptionProfilPage() {
     window.location.href = mode === 'cherche' ? '/rechercher' : '/publier'
   }
 
-  const inp: React.CSSProperties = {
+  const inp: CSSProperties = {
     width: '100%', padding: '12px', marginBottom: '16px',
     border: '1px solid #ddd', borderRadius: '8px',
     fontSize: '16px', fontFamily: 'inherit', boxSizing: 'border-box',
     background: '#fff', color: '#292929',
   }
-  const lbl: React.CSSProperties = {
+  const lbl: CSSProperties = {
     display: 'block', marginBottom: '6px', fontWeight: 600, color: '#292929', fontSize: '14px',
   }
 
