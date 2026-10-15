@@ -373,7 +373,29 @@ export default function ProfilPage() {
 
             {/* ══ Onglet Galerie ══ */}
             {onglet === 'galerie' && (
-              galerie.length === 0 ? empty('Ajoutez des photos en publiant un service.', 'أضيفي صوراً عند نشر خدمة.') : (
+              galerie.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 24px', color: '#8a7570' }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>📸</div>
+                  <p style={{ fontSize: 15, marginBottom: 20, lineHeight: 1.5 }}>
+                    {lang === 'fr' ? 'Vos photos de réalisations apparaissent ici.' : 'تظهر هنا صور أعمالك.'}
+                  </p>
+                  <a
+                    href="/publier"
+                    style={{
+                      display: 'inline-block',
+                      background: '#59364A',
+                      color: '#fff',
+                      padding: '12px 28px',
+                      borderRadius: 12,
+                      fontSize: 15,
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    {lang === 'fr' ? '➕ Publier un service avec photos' : '➕ نشر خدمة مع صور'}
+                  </a>
+                </div>
+              ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4 }}>
                   {galerie.map((url, i) => (
                     <a key={url} href={url} target="_blank" rel="noreferrer" style={{ aspectRatio: '1', borderRadius: 8, overflow: 'hidden', background: '#f0e8e0', display: 'block' }}>
