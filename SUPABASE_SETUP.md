@@ -2,7 +2,7 @@
 
 ## Étape 1 — Exécuter le schéma SQL
 
-1. Allez sur [supabase.com](https://supabase.com) → votre projet `pivezflqwinkdwauybwg`
+1. Allez sur [supabase.com](https://supabase.com) → votre projet `nrxkpzlxirexszzeppaf`
 2. Cliquez sur **SQL Editor** dans le menu gauche
 3. Cliquez **New query**
 4. Copiez-collez le contenu du fichier `supabase/migrations/001_initial_schema.sql`
@@ -52,12 +52,12 @@ select
 
 ## Variables d'environnement Vercel (déjà configurées ✅)
 
-- `NEXT_PUBLIC_SUPABASE_URL` = `https://pivezflqwinkdwauybwg.supabase.co`
+- `NEXT_PUBLIC_SUPABASE_URL` = `https://nrxkpzlxirexszzeppaf.supabase.co`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = votre clé JWT
 
 > **Note** : Ces variables sont actuellement configurées en **Production** uniquement.
 > Pour le développement local, créez un fichier `.env.local` :
 > ```
-> NEXT_PUBLIC_SUPABASE_URL=https://pivezflqwinkdwauybwg.supabase.co
+> NEXT_PUBLIC_SUPABASE_URL=https://nrxkpzlxirexszzeppaf.supabase.co
 > NEXT_PUBLIC_SUPABASE_ANON_KEY=votre_clé_ici
 > ```
