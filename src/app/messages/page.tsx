@@ -617,53 +617,66 @@ function MessagesPage() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Zone saisie complète — ne disparaît jamais */}
-        <div style={{ background: '#fff', borderTop: '1px solid #e8e1d9', flexShrink: 0 }}>
-          {/* Bouton devis — visible en haut de la zone */}
-          <div style={{ padding: '8px 12px 0' }}>
-            <button
-              onClick={() => setShowDevisForm(true)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                background: '#C77D69', color: '#fff', border: 'none',
-                borderRadius: 20, padding: '7px 16px', fontSize: 13, fontWeight: 600,
-                cursor: 'pointer', height: 36,
-              }}
-            >
-              <span style={{ fontSize: 15 }}>📋</span>
-              <span>Envoyer un devis</span>
-            </button>
-          </div>
-          {/* Ligne textarea + envoyer */}
-          <div style={{ padding: '6px 12px 14px', display: 'flex', alignItems: 'flex-end', gap: 8 }}>
-          {/* Textarea */}
-          <textarea
-            ref={inputRef}
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Votre message…"
-            rows={1}
-            style={{
-              flex: 1, border: '1.5px solid #e0d8d2', borderRadius: 12, padding: '10px 14px',
-              fontSize: 14, resize: 'none', outline: 'none', background: '#FAF7F2',
-              fontFamily: 'inherit', lineHeight: 1.5, maxHeight: 120, overflowY: 'auto',
-            }}
-            onFocus={e => (e.currentTarget.style.borderColor = '#59364A')}
-            onBlur={e => (e.currentTarget.style.borderColor = '#e0d8d2')}
-          />
-          {/* Bouton envoi */}
+        {/* ═══ BARRE DE SAISIE COMPLÈTE ═══ */}
+        <div style={{
+          flexShrink: 0,
+          background: '#fff',
+          borderTop: '2px solid #e8e1d9',
+          padding: '10px 12px 16px',
+        }}>
+          {/* ── Bouton Envoyer un devis ── */}
           <button
-            onClick={sendMessage}
-            disabled={!draft.trim() || sending}
+            onClick={() => setShowDevisForm(true)}
             style={{
-              width: 42, height: 42, borderRadius: '50%', border: 'none', cursor: 'pointer',
-              background: draft.trim() && !sending ? '#59364A' : '#ddd',
-              color: '#fff', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              width: '100%',
+              height: 44,
+              marginBottom: 10,
+              background: '#C77D69',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: 'pointer',
+              letterSpacing: 0.3,
             }}
           >
-            {sending ? '…' : '↑'}
+            <span>📋</span>
+            <span>Envoyer un devis</span>
           </button>
+
+          {/* ── Textarea + bouton envoi ── */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+            <textarea
+              ref={inputRef}
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Votre message…"
+              rows={1}
+              style={{
+                flex: 1, border: '1.5px solid #e0d8d2', borderRadius: 12, padding: '10px 14px',
+                fontSize: 14, resize: 'none', outline: 'none', background: '#FAF7F2',
+                fontFamily: 'inherit', lineHeight: 1.5, maxHeight: 120, overflowY: 'auto',
+              }}
+              onFocus={e => (e.currentTarget.style.borderColor = '#59364A')}
+              onBlur={e => (e.currentTarget.style.borderColor = '#e0d8d2')}
+            />
+            <button
+              onClick={sendMessage}
+              disabled={!draft.trim() || sending}
+              style={{
+                width: 42, height: 42, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                background: draft.trim() && !sending ? '#59364A' : '#ddd',
+                color: '#fff', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}
+            >
+              {sending ? '…' : '↑'}
+            </button>
           </div>
         </div>
       </div>
