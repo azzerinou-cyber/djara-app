@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { supabase } from '@/lib/supabase'
@@ -258,7 +259,7 @@ function RechercherContent() {
                 {profile.trust_level >= 2 && (
                   <span style={{ fontSize: '12px', color: '#A8B5A2' }}>✓ Vérifiée</span>
                 )}
-                <a
+                <Link
                   href={`/profil/${profile.id}`}
                   style={{
                     marginLeft: 'auto', padding: '8px 16px', background: '#59364A',
@@ -267,7 +268,7 @@ function RechercherContent() {
                   }}
                 >
                   Voir le profil
-                </a>
+                </Link>
               </div>
             </div>
           ))}
