@@ -1,12 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 
-export default function ConnexionPage() {
+function ConnexionForm() {
+  const { signIn } = useAuth()
+  const searchParams = useSearchParams()
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // N'accepter que des chemins internes pour éviter les redirections ouvertes
+  const rawRedirect = searchParams.get('redirect') ?? '/'
+  const redirect = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/'
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -17,17 +26,19 @@ export default function ConnexionPage() {
     setLoading(true)
     setError('')
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: form.email,
-      password: form.password,
-    })
-
+    const { error: signInError } = await signIn(form.email, form.password)
     if (signInError) {
-      setError('Email ou mot de passe incorrect.')
-    } else {
-      window.location.href = '/'
+      setError(signInError)
+      setLoading(false)
+      return
     }
-    setLoading(false)
+
+    // Profil pas encore complété → étape d'inscription
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data: profile } = await supabase.from('profiles').select('id').eq('id', user?.id ?? '').maybeSingle()
+
+    // Navigation complète pour que le proxy voie les nouveaux cookies de session
+    window.location.href = profile ? redirect : '/inscription/profil'
   }
 
   const inputStyle = {
@@ -50,10 +61,10 @@ export default function ConnexionPage() {
 
       <form onSubmit={handleSubmit}>
         <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#292929', fontSize: '14px' }}>Email *</label>
-        <input name="email" type="email" value={form.email} onChange={handleChange} required placeholder="votre@email.com" style={inputStyle} />
+        <input name="email" type="email" value={form.email} onChange={handleChange} required autoComplete="email" placeholder="votre@email.com" style={inputStyle} />
 
         <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#292929', fontSize: '14px' }}>Mot de passe *</label>
-        <input name="password" type="password" value={form.password} onChange={handleChange} required style={inputStyle} />
+        <input name="password" type="password" value={form.password} onChange={handleChange} required autoComplete="current-password" style={inputStyle} />
 
         <button type="submit" disabled={loading} style={{
           width: '100%', padding: '16px', background: loading ? '#9b7a8a' : '#59364A',
@@ -65,11 +76,19 @@ export default function ConnexionPage() {
 
         <p style={{ textAlign: 'center', marginTop: '24px', color: '#888', fontSize: '14px' }}>
           Pas encore de compte ?{' '}
-          <a href="/auth/inscription" style={{ color: '#59364A', fontWeight: 600, textDecoration: 'none' }}>
-            S'inscrire
-          </a>
+          <Link href="/auth/inscription" style={{ color: '#59364A', fontWeight: 600, textDecoration: 'none' }}>
+            S&apos;inscrire
+          </Link>
         </p>
       </form>
     </main>
+  )
+}
+
+export default function ConnexionPage() {
+  return (
+    <Suspense fallback={null}>
+      <ConnexionForm />
+    </Suspense>
   )
 }

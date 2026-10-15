@@ -35,7 +35,7 @@ export default function HomePage() {
           <button onClick={() => setLang(lang === 'fr' ? 'ar' : 'fr')} style={{ background: '#FAF7F2', border: '1px solid #e8ddd6', color: '#59364A', borderRadius: 20, padding: '5px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
             {lang === 'fr' ? 'عربي' : 'FR'}
           </button>
-          <Link href="/auth/connexion" style={{ background: '#59364A', color: '#FAF7F2', borderRadius: 25, padding: '8px 18px', fontSize: 13, textDecoration: 'none', fontWeight: 700 }}>
+          <Link href="/connexion" style={{ background: '#59364A', color: '#FAF7F2', borderRadius: 25, padding: '8px 18px', fontSize: 13, textDecoration: 'none', fontWeight: 700 }}>
             {lang === 'fr' ? 'Connexion' : 'دخول'}
           </Link>
         </div>

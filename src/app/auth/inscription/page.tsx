@@ -1,15 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import Link from 'next/link'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function InscriptionPage() {
-  const [form, setForm] = useState({ email: '', password: '', display_name: '', wilaya: '', commune: '' })
+  const { signUp } = useAuth()
+  const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
+  const [needsConfirmation, setNeedsConfirmation] = useState(false)
   const [error, setError] = useState('')
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
@@ -18,31 +20,23 @@ export default function InscriptionPage() {
     setLoading(true)
     setError('')
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-    })
+    const { error: signUpError, needsConfirmation } = await signUp(form.email, form.password)
 
     if (signUpError) {
-      setError(signUpError.message)
+      setError(signUpError)
       setLoading(false)
       return
     }
 
-    if (data.user) {
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
-        display_name: form.display_name,
-        wilaya: form.wilaya,
-        commune: form.commune,
-      })
-      if (profileError) {
-        setError('Compte créé mais erreur profil : ' + profileError.message)
-      } else {
-        setSuccess(true)
-      }
+    if (needsConfirmation) {
+      // Le lien de l'email ramène directement sur /inscription/profil
+      setNeedsConfirmation(true)
+      setLoading(false)
+      return
     }
-    setLoading(false)
+
+    // Session ouverte : le profil se complète à l'étape suivante
+    window.location.href = '/inscription/profil'
   }
 
   const inputStyle = {
@@ -52,16 +46,18 @@ export default function InscriptionPage() {
     background: '#fff', color: '#292929',
   }
 
-  if (success) {
-  return (
-    <div style={{ textAlign: 'center', padding: '4rem' }}>
-      <p style={{ fontSize: '2rem' }}>🌸</p>
-      <h2>Bienvenue sur DJARA !</h2>
-      <p>Votre compte a été créé avec succès.</p>
-      <a href="/">Aller à l'accueil</a>
-    </div>
-  )
-}
+  if (needsConfirmation) {
+    return (
+      <main style={{ padding: '48px 24px', maxWidth: '480px', margin: '0 auto', textAlign: 'center' }}>
+        <p style={{ fontSize: '2rem' }}>📩</p>
+        <h1 style={{ color: '#59364A', marginBottom: '8px' }}>Vérifiez votre email</h1>
+        <p style={{ color: '#888', fontSize: '14px', lineHeight: 1.6 }}>
+          Un lien de confirmation a été envoyé à <strong>{form.email}</strong>.
+          Cliquez dessus pour activer votre compte et compléter votre profil.
+        </p>
+      </main>
+    )
+  }
 
   return (
     <main style={{ padding: '48px 24px', maxWidth: '480px', margin: '0 auto' }}>
@@ -77,20 +73,11 @@ export default function InscriptionPage() {
       )}
 
       <form onSubmit={handleSubmit}>
-        <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#292929', fontSize: '14px' }}>Prénom ou pseudonyme *</label>
-        <input name="display_name" value={form.display_name} onChange={handleChange} required placeholder="Ex : Fatima" style={inputStyle} />
-
         <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#292929', fontSize: '14px' }}>Email *</label>
-        <input name="email" type="email" value={form.email} onChange={handleChange} required placeholder="votre@email.com" style={inputStyle} />
+        <input name="email" type="email" value={form.email} onChange={handleChange} required autoComplete="email" placeholder="votre@email.com" style={inputStyle} />
 
         <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#292929', fontSize: '14px' }}>Mot de passe *</label>
-        <input name="password" type="password" value={form.password} onChange={handleChange} required placeholder="8 caractères minimum" minLength={8} style={inputStyle} />
-
-        <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#292929', fontSize: '14px' }}>Wilaya *</label>
-        <input name="wilaya" value={form.wilaya} onChange={handleChange} required placeholder="Ex : Alger" style={inputStyle} />
-
-        <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#292929', fontSize: '14px' }}>Commune *</label>
-        <input name="commune" value={form.commune} onChange={handleChange} required placeholder="Ex : Bab El Oued" style={inputStyle} />
+        <input name="password" type="password" value={form.password} onChange={handleChange} required autoComplete="new-password" placeholder="8 caractères minimum" minLength={8} style={inputStyle} />
 
         <button type="submit" disabled={loading} style={{
           width: '100%', padding: '16px', background: loading ? '#9b7a8a' : '#59364A',
@@ -102,9 +89,9 @@ export default function InscriptionPage() {
 
         <p style={{ textAlign: 'center', marginTop: '24px', color: '#888', fontSize: '14px' }}>
           Déjà un compte ?{' '}
-          <a href="/auth/connexion" style={{ color: '#59364A', fontWeight: 600, textDecoration: 'none' }}>
+          <Link href="/connexion" style={{ color: '#59364A', fontWeight: 600, textDecoration: 'none' }}>
             Se connecter
-          </a>
+          </Link>
         </p>
       </form>
     </main>
