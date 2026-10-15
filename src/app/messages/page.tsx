@@ -617,49 +617,53 @@ function MessagesPage() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Barre de saisie — ne se compresse jamais */}
-        <div style={{ background: '#fff', borderTop: '1px solid #e8e1d9', flexShrink: 0, padding: '8px 12px 12px' }}>
-          {/* Bouton devis */}
+        {/* Barre de saisie — une seule ligne, flexShrink:0, ne disparaît jamais */}
+        <div style={{
+          background: '#fff', borderTop: '1px solid #e8e1d9',
+          flexShrink: 0, padding: '10px 12px 14px',
+          display: 'flex', alignItems: 'flex-end', gap: 8,
+        }}>
+          {/* Bouton devis — icône à gauche */}
           <button
             onClick={() => setShowDevisForm(true)}
+            title="Envoyer un devis"
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: '#f3edf0', border: '1.5px solid #C77D69', borderRadius: 20,
-              color: '#59364A', fontWeight: 700, fontSize: 13, padding: '6px 14px',
-              cursor: 'pointer', marginBottom: 8,
+              width: 42, height: 42, borderRadius: '50%', border: '2px solid #C77D69',
+              background: '#f3edf0', color: '#59364A', fontSize: 20,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', flexShrink: 0,
             }}
           >
-            📋 Envoyer un devis
+            📋
           </button>
-          {/* Champ + envoi */}
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
-            <textarea
-              ref={inputRef}
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Votre message…"
-              rows={1}
-              style={{
-                flex: 1, border: '1.5px solid #e0d8d2', borderRadius: 12, padding: '10px 14px',
-                fontSize: 14, resize: 'none', outline: 'none', background: '#FAF7F2',
-                fontFamily: 'inherit', lineHeight: 1.5, maxHeight: 120, overflowY: 'auto',
-              }}
-              onFocus={e => (e.currentTarget.style.borderColor = '#59364A')}
-              onBlur={e => (e.currentTarget.style.borderColor = '#e0d8d2')}
-            />
-            <button
-              onClick={sendMessage}
-              disabled={!draft.trim() || sending}
-              style={{
-                width: 42, height: 42, borderRadius: '50%', border: 'none', cursor: 'pointer',
-                background: draft.trim() && !sending ? '#59364A' : '#ddd',
-                color: '#fff', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}
-            >
-              {sending ? '…' : '↑'}
-            </button>
-          </div>
+          {/* Textarea */}
+          <textarea
+            ref={inputRef}
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Votre message…"
+            rows={1}
+            style={{
+              flex: 1, border: '1.5px solid #e0d8d2', borderRadius: 12, padding: '10px 14px',
+              fontSize: 14, resize: 'none', outline: 'none', background: '#FAF7F2',
+              fontFamily: 'inherit', lineHeight: 1.5, maxHeight: 120, overflowY: 'auto',
+            }}
+            onFocus={e => (e.currentTarget.style.borderColor = '#59364A')}
+            onBlur={e => (e.currentTarget.style.borderColor = '#e0d8d2')}
+          />
+          {/* Bouton envoi */}
+          <button
+            onClick={sendMessage}
+            disabled={!draft.trim() || sending}
+            style={{
+              width: 42, height: 42, borderRadius: '50%', border: 'none', cursor: 'pointer',
+              background: draft.trim() && !sending ? '#59364A' : '#ddd',
+              color: '#fff', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}
+          >
+            {sending ? '…' : '↑'}
+          </button>
         </div>
       </div>
     );
