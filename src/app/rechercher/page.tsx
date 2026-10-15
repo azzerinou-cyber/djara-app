@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { supabase } from '@/lib/supabase'
+import BottomNav from '@/components/BottomNav'
 
 const SLUG_TO_ICON: Record<string, string> = {
   'cuisine': '🍳',
@@ -92,7 +93,7 @@ function RechercherContent() {
         ${servicesEmbed} ( category_id, categories ( name_fr, icon ) )
       `)
       .eq('is_active', true)
-      .eq('is_provider', true)
+      .neq('profile_type', 'particuliere')
       .order('trust_level', { ascending: false })
       .limit(20)
 
@@ -124,7 +125,7 @@ function RechercherContent() {
   }
 
   return (
-    <main style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
+    <main style={{ padding: '24px', maxWidth: '800px', margin: '0 auto', paddingBottom: '96px' }}>
       <h1 style={{ color: '#59364A', marginBottom: '24px', fontSize: '24px', fontWeight: 700 }}>
         {catIcon ? `${catIcon} ` : ''}Rechercher une prestataire
       </h1>
@@ -272,6 +273,7 @@ function RechercherContent() {
           ))}
         </div>
       )}
+      <BottomNav />
     </main>
   )
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import BottomNav from '@/components/BottomNav';
 import type { RealtimeChannel, RealtimePostgresInsertPayload } from '@supabase/supabase-js';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -697,22 +698,7 @@ function MessagesPage() {
         {activeConvId ? renderConversation() : renderConvList()}
       </div>
 
-      {!activeConvId && (
-        <nav style={{ background: '#fff', borderTop: '1px solid #e8e1d9', display: 'flex', justifyContent: 'space-around', padding: '10px 0 20px', position: 'sticky', bottom: 0 }}>
-          {[
-            { icon: '🏠', label: 'Accueil', href: '/' },
-            { icon: '🔍', label: 'Rechercher', href: '/rechercher' },
-            { icon: '➕', label: 'Publier', href: '/publier' },
-            { icon: '💬', label: 'Messages', href: '/messages', active: true },
-            { icon: '👤', label: 'Profil', href: '/mon-profil' },
-          ].map(item => (
-            <button key={item.href} onClick={() => router.push(item.href)} style={{ background: 'none', border: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, cursor: 'pointer', padding: '0 8px' }}>
-              <span style={{ fontSize: 22 }}>{item.icon}</span>
-              <span style={{ fontSize: 10, color: item.active ? '#59364A' : '#aaa', fontWeight: item.active ? 700 : 400 }}>{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      )}
+      {!activeConvId && <BottomNav />}
 
       {/* Formulaire devis */}
       {showDevisForm && (
