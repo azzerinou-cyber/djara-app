@@ -617,20 +617,23 @@ function MessagesPage() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Zone de saisie */}
-        <div style={{ borderTop: '1px solid #e8e1d9', background: '#fff', padding: '10px 12px', display: 'flex', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
-          {/* Bouton devis */}
+        {/* Bouton devis au-dessus de la zone de saisie */}
+        <div style={{ background: '#fff', padding: '8px 12px 0', borderTop: '1px solid #e8e1d9' }}>
           <button
             onClick={() => setShowDevisForm(true)}
-            title="Envoyer un devis"
             style={{
-              width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #e0d8d2',
-              background: '#fff', cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: '#f3edf0', border: '1.5px solid #C77D69', borderRadius: 20,
+              color: '#59364A', fontWeight: 700, fontSize: 13, padding: '6px 14px',
+              cursor: 'pointer', marginBottom: 8,
             }}
           >
-            📋
+            📋 Envoyer un devis
           </button>
+        </div>
 
+        {/* Zone de saisie */}
+        <div style={{ background: '#fff', padding: '0 12px 10px', display: 'flex', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
           <textarea
             ref={inputRef}
             value={draft}
