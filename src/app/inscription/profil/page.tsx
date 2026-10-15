@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties, type ChangeEvent, type FormEvent } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -42,11 +42,11 @@ export default function InscriptionProfilPage() {
     }
   }, [profile])
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  function handleChange(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  function handleIdentityChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleIdentityChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null
     setError('')
     if (file && !IDENTITY_TYPES.includes(file.type)) {
@@ -64,7 +64,7 @@ export default function InscriptionProfilPage() {
     setIdentityFile(file)
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!user) return
 
