@@ -9,9 +9,14 @@ const PROFILE_TYPES: { value: ProfileType; icon: string; label: string }[] = [
   { value: 'professionnelle', icon: '💼', label: 'Professionnelle' },
 ]
 
+const IDENTITY_BUCKET = 'identity-documents'
+const IDENTITY_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+const IDENTITY_MAX_SIZE = 5 * 1024 * 1024
+
 export default function InscriptionProfilPage() {
   const { user, profile, loading: authLoading, refreshProfile } = useAuth()
   const [form, setForm] = useState({ display_name: '', profile_type: '' as ProfileType | '', business_name: '', commerce_number: '', phone: '', wilaya: '', commune: '', bio: '' })
+  const [identityFile, setIdentityFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -35,6 +40,24 @@ export default function InscriptionProfilPage() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
+  function handleIdentityChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null
+    setError('')
+    if (file && !IDENTITY_TYPES.includes(file.type)) {
+      setError("Format non accepté : JPG, PNG, WEBP ou PDF uniquement.")
+      e.target.value = ''
+      setIdentityFile(null)
+      return
+    }
+    if (file && file.size > IDENTITY_MAX_SIZE) {
+      setError('Le fichier dépasse 5 Mo.')
+      e.target.value = ''
+      setIdentityFile(null)
+      return
+    }
+    setIdentityFile(file)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!user) return
@@ -47,8 +70,28 @@ export default function InscriptionProfilPage() {
       setError("Le nom de l'entreprise et le numéro de registre de commerce sont obligatoires.")
       return
     }
+    const identityPath = `${user.id}/identity`
+    const hasIdentityDoc = Boolean(profile?.identity_doc_url)
+    if (!hasIdentityDoc && !identityFile) {
+      setError("La pièce d'identité (CNI recto ou passeport) est obligatoire.")
+      return
+    }
     setLoading(true)
     setError('')
+
+    if (!hasIdentityDoc && identityFile) {
+      const { error: uploadError } = await supabase.storage
+        .from(IDENTITY_BUCKET)
+        .upload(identityPath, identityFile, { contentType: identityFile.type, upsert: false })
+
+      // Déjà déposé lors d'une tentative précédente : on continue
+      const alreadyExists = uploadError && 'code' in uploadError && uploadError.code === 'ResourceAlreadyExists'
+      if (uploadError && !alreadyExists) {
+        setError("Impossible d'envoyer la pièce d'identité : " + uploadError.message)
+        setLoading(false)
+        return
+      }
+    }
 
     const { error: profileError } = await supabase.from('profiles').upsert({
       id: user.id,
@@ -61,6 +104,8 @@ export default function InscriptionProfilPage() {
       wilaya: form.wilaya.trim(),
       commune: form.commune.trim(),
       bio: form.bio.trim() || null,
+      // Chemin dans le bucket privé, jamais une URL publique
+      identity_doc_url: identityPath,
       updated_at: new Date().toISOString(),
     })
 
@@ -155,6 +200,31 @@ export default function InscriptionProfilPage() {
 
         <label style={labelStyle}>À propos de moi</label>
         <textarea name="bio" value={form.bio} onChange={handleChange} rows={4} placeholder="Décrivez vos compétences et votre expérience..." style={{ ...inputStyle, resize: 'vertical' }} />
+
+        <fieldset style={{ border: '1px solid #f0d8c8', borderRadius: '12px', padding: '16px', margin: '0 0 16px', background: '#fff8f0' }}>
+          <legend style={{ ...labelStyle, padding: '0 6px', color: '#59364A' }}>🔐 Pièce d&apos;identité *</legend>
+          <p style={{ color: '#888', fontSize: '12px', lineHeight: 1.5, margin: '0 0 12px' }}>
+            CNI (recto) ou passeport. Document strictement confidentiel : il n&apos;est jamais affiché sur votre profil
+            et n&apos;est consulté que par l&apos;équipe DJARA pour vérifier votre identité.
+          </p>
+
+          {profile?.identity_doc_url ? (
+            <div style={{ fontSize: '13px', color: profile.identity_verified ? '#2e7d32' : '#C77D69', fontWeight: 600 }}>
+              {profile.identity_verified ? '✓ Identité vérifiée' : '⏳ Document envoyé — vérification en cours'}
+            </div>
+          ) : (
+            <>
+              <input
+                type="file"
+                accept={IDENTITY_TYPES.join(',')}
+                onChange={handleIdentityChange}
+                required
+                style={{ width: '100%', fontSize: '14px', color: '#292929' }}
+              />
+              <div style={{ color: '#bbb', fontSize: '11px', marginTop: '6px' }}>JPG, PNG, WEBP ou PDF — 5 Mo maximum</div>
+            </>
+          )}
+        </fieldset>
 
         <button type="submit" disabled={loading} style={{
           width: '100%', padding: '16px', background: loading ? '#9b7a8a' : '#59364A',

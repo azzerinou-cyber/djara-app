@@ -12,6 +12,8 @@ export type Profile = {
   profile_type: ProfileType | null
   business_name: string | null
   commerce_number: string | null
+  identity_doc_url: string | null
+  identity_verified: boolean
   phone: string | null
   wilaya: string | null
   commune: string | null
