@@ -617,8 +617,9 @@ function MessagesPage() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Bouton devis au-dessus de la zone de saisie */}
-        <div style={{ background: '#fff', padding: '8px 12px 0', borderTop: '1px solid #e8e1d9' }}>
+        {/* Barre de saisie — ne se compresse jamais */}
+        <div style={{ background: '#fff', borderTop: '1px solid #e8e1d9', flexShrink: 0, padding: '8px 12px 12px' }}>
+          {/* Bouton devis */}
           <button
             onClick={() => setShowDevisForm(true)}
             style={{
@@ -630,36 +631,35 @@ function MessagesPage() {
           >
             📋 Envoyer un devis
           </button>
-        </div>
-
-        {/* Zone de saisie */}
-        <div style={{ background: '#fff', padding: '0 12px 10px', display: 'flex', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
-          <textarea
-            ref={inputRef}
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Votre message…"
-            rows={1}
-            style={{
-              flex: 1, border: '1.5px solid #e0d8d2', borderRadius: 12, padding: '10px 14px',
-              fontSize: 14, resize: 'none', outline: 'none', background: '#FAF7F2',
-              fontFamily: 'inherit', lineHeight: 1.5, maxHeight: 120, overflowY: 'auto',
-            }}
-            onFocus={e => (e.currentTarget.style.borderColor = '#59364A')}
-            onBlur={e => (e.currentTarget.style.borderColor = '#e0d8d2')}
-          />
-          <button
-            onClick={sendMessage}
-            disabled={!draft.trim() || sending}
-            style={{
-              width: 42, height: 42, borderRadius: '50%', border: 'none', cursor: 'pointer',
-              background: draft.trim() && !sending ? '#59364A' : '#ddd',
-              color: '#fff', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}
-          >
-            {sending ? '…' : '↑'}
-          </button>
+          {/* Champ + envoi */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+            <textarea
+              ref={inputRef}
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Votre message…"
+              rows={1}
+              style={{
+                flex: 1, border: '1.5px solid #e0d8d2', borderRadius: 12, padding: '10px 14px',
+                fontSize: 14, resize: 'none', outline: 'none', background: '#FAF7F2',
+                fontFamily: 'inherit', lineHeight: 1.5, maxHeight: 120, overflowY: 'auto',
+              }}
+              onFocus={e => (e.currentTarget.style.borderColor = '#59364A')}
+              onBlur={e => (e.currentTarget.style.borderColor = '#e0d8d2')}
+            />
+            <button
+              onClick={sendMessage}
+              disabled={!draft.trim() || sending}
+              style={{
+                width: 42, height: 42, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                background: draft.trim() && !sending ? '#59364A' : '#ddd',
+                color: '#fff', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}
+            >
+              {sending ? '…' : '↑'}
+            </button>
+          </div>
         </div>
       </div>
     );
