@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import BottomNav from '@/components/BottomNav'
 
 type Lang = 'fr' | 'ar'
 type Onglet = 'services' | 'galerie' | 'avis'
@@ -17,7 +18,7 @@ interface Profile {
   wilaya: string | null
   trust_level: number
   is_active: boolean
-  is_provider: boolean
+  profile_type: string | null
 }
 
 interface Service {
@@ -140,7 +141,7 @@ export default function ProfilClient() {
     // Profil
     const { data: profileData, error: profileError } = await supabase
       .from('profiles')
-      .select('id, display_name, business_name, bio, avatar_url, commune, wilaya, trust_level, is_active, is_provider')
+      .select('id, display_name, business_name, bio, avatar_url, commune, wilaya, trust_level, is_active, profile_type')
       .eq('id', id)
       .single()
 
@@ -217,7 +218,7 @@ export default function ProfilClient() {
   const trustBadge = profile!.trust_level >= 2
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', background: COLORS.ivoire, fontFamily: 'sans-serif', maxWidth: 480, margin: '0 auto', paddingBottom: 32 }}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', background: COLORS.ivoire, fontFamily: 'sans-serif', maxWidth: 480, margin: '0 auto', paddingBottom: 96 }}>
 
       {/* Header gradient */}
       <div style={{ background: `linear-gradient(135deg, ${COLORS.prune} 0%, #7a4a63 100%)`, padding: '20px 20px 60px', position: 'relative' }}>
@@ -505,6 +506,7 @@ export default function ProfilClient() {
           )
         )}
       </div>
+      <BottomNav />
     </div>
   )
 }
