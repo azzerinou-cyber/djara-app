@@ -262,7 +262,7 @@ export default function MonProfilPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <span style={{ color: '#59364A', fontWeight: 800, fontSize: 14 }}>{t.mesServices}</span>
               <div style={{ display: 'flex', gap: 8 }}>
-                {profile?.profile_type === 'professionnelle' && (
+                {modePrestataire && (
                   <Link href="/devis" style={{ background: '#59364A', color: '#fff', borderRadius: 20, padding: '7px 14px', fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
                     📄 Mes devis
                   </Link>
