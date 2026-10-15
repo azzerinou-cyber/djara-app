@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { supabase } from '@/lib/supabase'
@@ -55,7 +55,7 @@ const profileCategories = (p: ProfileResult) => {
   return [...seen.values()]
 }
 
-export default function RechercherPage() {
+function RechercherContent() {
   const searchParams = useSearchParams()
   const [profiles, setProfiles] = useState<ProfileResult[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -273,5 +273,13 @@ export default function RechercherPage() {
         </div>
       )}
     </main>
+  )
+}
+
+export default function RechercherPage() {
+  return (
+    <Suspense fallback={<main style={{ minHeight: '100vh', background: '#FAF7F2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888' }}>Chargement…</main>}>
+      <RechercherContent />
+    </Suspense>
   )
 }
