@@ -31,6 +31,13 @@ interface Service {
   categories: { name_fr: string; icon: string | null } | null
 }
 
+interface PortfolioImage {
+  id: string
+  url: string
+  caption: string | null
+  sort_order: number
+}
+
 interface Review {
   id: string
   rating: number
@@ -102,8 +109,10 @@ export default function ProfilClient() {
   const [onglet, setOnglet] = useState<Onglet>('services')
   const [profile, setProfile] = useState<Profile | null>(null)
   const [services, setServices] = useState<Service[]>([])
+  const [portfolioImages, setPortfolioImages] = useState<PortfolioImage[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [avgRating, setAvgRating] = useState<number | null>(null)
+  const [selectedImage, setSelectedImage] = useState<PortfolioImage | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
@@ -135,6 +144,16 @@ export default function ProfilClient() {
       .limit(10)
 
     setServices((svcData ?? []) as unknown as Service[])
+
+    // Images portfolio
+    const { data: imgData } = await supabase
+      .from('portfolio_images')
+      .select('id, url, caption, sort_order')
+      .eq('provider_id', id)
+      .order('sort_order', { ascending: true })
+      .limit(24)
+
+    setPortfolioImages((imgData ?? []) as PortfolioImage[])
 
     // Avis
     const { data: reviewData } = await supabase
@@ -282,6 +301,11 @@ export default function ProfilClient() {
                 {services.length}
               </span>
             )}
+            {o === 'galerie' && portfolioImages.length > 0 && (
+              <span style={{ marginLeft: 4, background: COLORS.sauge, color: '#fff', borderRadius: 10, padding: '1px 6px', fontSize: 11 }}>
+                {portfolioImages.length}
+              </span>
+            )}
             {o === 'avis' && reviews.length > 0 && (
               <span style={{ marginLeft: 4, background: COLORS.terracotta, color: '#fff', borderRadius: 10, padding: '1px 6px', fontSize: 11 }}>
                 {reviews.length}
@@ -341,10 +365,71 @@ export default function ProfilClient() {
 
         {/* --- GALERIE --- */}
         {onglet === 'galerie' && (
-          <div style={{ textAlign: 'center', color: '#bbb', paddingTop: 40 }}>
-            <div style={{ fontSize: 40 }}>🖼️</div>
-            <p style={{ marginTop: 12 }}>{tx.aucuneRealisation}</p>
-          </div>
+          portfolioImages.length === 0 ? (
+            <div style={{ textAlign: 'center', color: '#bbb', paddingTop: 40 }}>
+              <div style={{ fontSize: 40 }}>🖼️</div>
+              <p style={{ marginTop: 12 }}>{tx.aucuneRealisation}</p>
+            </div>
+          ) : (
+            <>
+              {/* Lightbox */}
+              {selectedImage && (
+                <div
+                  onClick={() => setSelectedImage(null)}
+                  style={{
+                    position: 'fixed', inset: 0, zIndex: 1000,
+                    background: 'rgba(0,0,0,0.88)',
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center',
+                    padding: 20,
+                  }}
+                >
+                  <img
+                    src={selectedImage.url}
+                    alt={selectedImage.caption ?? ''}
+                    style={{ maxWidth: '100%', maxHeight: '80vh', borderRadius: 12, objectFit: 'contain' }}
+                  />
+                  {selectedImage.caption && (
+                    <p style={{ color: '#fff', marginTop: 12, fontSize: 14, textAlign: 'center' }}>{selectedImage.caption}</p>
+                  )}
+                  <button
+                    onClick={() => setSelectedImage(null)}
+                    style={{ marginTop: 16, background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: 10, padding: '8px 20px', cursor: 'pointer', fontSize: 14 }}
+                  >
+                    ✕ Fermer
+                  </button>
+                </div>
+              )}
+
+              {/* Grille */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 6,
+              }}>
+                {portfolioImages.map(img => (
+                  <div
+                    key={img.id}
+                    onClick={() => setSelectedImage(img)}
+                    style={{
+                      aspectRatio: '1 / 1',
+                      borderRadius: 10,
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      background: '#f0ebe4',
+                    }}
+                  >
+                    <img
+                      src={img.url}
+                      alt={img.caption ?? ''}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+              </div>
+            </>
+          )
         )}
 
         {/* --- AVIS --- */}
