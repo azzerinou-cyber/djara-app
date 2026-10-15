@@ -1,7 +1,7 @@
 'use client'
 
 // Formulaire de service partagé : création (/publier) et modification (/publier/[id])
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
@@ -114,7 +114,7 @@ export default function ServiceForm({ service }: { service?: EditableService }) 
   const wilaya = form.wilaya ?? profile?.wilaya ?? ''
   const commune = form.commune ?? profile?.commune ?? ''
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+  function handleChange(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
@@ -122,7 +122,7 @@ export default function ServiceForm({ service }: { service?: EditableService }) 
     setDays(d => (d.includes(day) ? d.filter(x => x !== day) : [...d, day]))
   }
 
-  function handlePhotos(e: React.ChangeEvent<HTMLInputElement>) {
+  function handlePhotos(e: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? [])
     e.target.value = ''
     setError('')
@@ -175,7 +175,7 @@ export default function ServiceForm({ service }: { service?: EditableService }) 
     router.push('/profil')
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!user) return
     setError('')
