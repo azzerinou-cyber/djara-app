@@ -65,6 +65,12 @@ export default function MonProfilPage() {
     setServices((data as ServiceRow[]) ?? []);
   }, [user]);
 
+  // Persiste un champ de profil en base
+  const updateProfileField = useCallback(async (fields: Record<string, unknown>) => {
+    if (!user) return;
+    await supabase.from('profiles').update(fields).eq('id', user.id);
+  }, [user]);
+
   const fetchReviews = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
@@ -287,20 +293,28 @@ export default function MonProfilPage() {
 
         {/* Toggles */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
-          <button
-            onClick={() => setDisponible(!disponible)}
-            style={{ background: disponible ? 'rgba(76,175,80,0.25)' : 'rgba(255,255,255,0.1)', border: `1px solid ${disponible ? 'rgba(76,175,80,0.5)' : 'rgba(255,255,255,0.2)'}`, color: disponible ? '#81c784' : 'rgba(255,255,255,0.5)', fontSize: 11, padding: '5px 12px', borderRadius: 20, cursor: 'pointer' }}
+          {/* disponible : pas de colonne profiles.is_available — indicateur visuel uniquement */}
+          <span
+            style={{ background: disponible ? 'rgba(76,175,80,0.25)' : 'rgba(255,255,255,0.1)', border: `1px solid ${disponible ? 'rgba(76,175,80,0.5)' : 'rgba(255,255,255,0.2)'}`, color: disponible ? '#81c784' : 'rgba(255,255,255,0.5)', fontSize: 11, padding: '5px 12px', borderRadius: 20 }}
           >
             {disponible ? `● ${t.disponible}` : `○ ${t.indisponible}`}
-          </button>
+          </span>
           <button
-            onClick={() => setProfilVisible(!profilVisible)}
+            onClick={async () => {
+              const next = !profilVisible;
+              setProfilVisible(next);
+              await updateProfileField({ is_active: next });
+            }}
             style={{ background: profilVisible ? 'rgba(168,181,162,0.2)' : 'rgba(255,100,100,0.15)', border: `1px solid ${profilVisible ? 'rgba(168,181,162,0.4)' : 'rgba(255,100,100,0.3)'}`, color: profilVisible ? '#A8B5A2' : '#ef9a9a', fontSize: 11, padding: '5px 12px', borderRadius: 20, cursor: 'pointer' }}
           >
             {profilVisible ? `👁 ${t.profilVisible}` : `🙈 ${t.profilCache}`}
           </button>
           <button
-            onClick={() => setModePrestataire(!modePrestataire)}
+            onClick={async () => {
+              const next = !modePrestataire;
+              setModePrestataire(next);
+              await updateProfileField({ profile_type: next ? 'professionnelle' : 'particuliere' });
+            }}
             style={{ background: modePrestataire ? 'rgba(199,125,105,0.25)' : 'rgba(255,255,255,0.1)', border: `1px solid ${modePrestataire ? 'rgba(199,125,105,0.5)' : 'rgba(255,255,255,0.2)'}`, color: modePrestataire ? '#C77D69' : 'rgba(255,255,255,0.5)', fontSize: 11, padding: '5px 12px', borderRadius: 20, cursor: 'pointer' }}
           >
             {modePrestataire ? `💼 ${t.modePrestataire}` : `🔍 ${t.modeCherche}`}
@@ -448,7 +462,7 @@ export default function MonProfilPage() {
                     <span style={{ background: s.status === 'active' ? '#e8f5e9' : '#fafafa', color: s.status === 'active' ? '#2e7d32' : '#bbb', fontSize: 10, padding: '3px 10px', borderRadius: 10, border: `1px solid ${s.status === 'active' ? '#c8e6c9' : '#e0e0e0'}` }}>
                       {s.status === 'active' ? t.actif : t.inactif}
                     </span>
-                    <button style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer' }}>⋯</button>
+                    <Link href={`/publier/${s.id}`} style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', textDecoration: 'none', color: '#292929', padding: '4px 8px' }}>✏️</Link>
                   </div>
                 </div>
               ))
