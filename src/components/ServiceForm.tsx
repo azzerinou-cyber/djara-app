@@ -299,12 +299,32 @@ export default function ServiceForm({ service }: { service?: EditableService }) 
             placeholder="Ex : Cours de henné traditionnel" style={inputStyle} />
 
           <label style={labelStyle}>Catégorie *</label>
-          <select name="category_id" value={form.category_id} onChange={handleChange} required style={inputStyle}>
-            <option value="">Choisir une catégorie</option>
-            {categories.map(c => (
-              <option key={c.id} value={c.id}>{c.icon ? `${c.icon} ` : ''}{c.name_fr}</option>
-            ))}
-          </select>
+          {/* Hidden input keeps required validation on the form */}
+          <input type="hidden" name="category_id" value={form.category_id} required />
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+            {categories.map(c => {
+              const selected = form.category_id === c.id
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, category_id: c.id }))}
+                  aria-pressed={selected}
+                  style={{
+                    padding: '8px 14px', borderRadius: '20px', fontSize: '13px', cursor: 'pointer',
+                    border: `1.5px solid ${selected ? '#59364A' : '#e0d8d0'}`,
+                    background: selected ? '#59364A' : '#fff',
+                    color: selected ? '#fff' : '#59364A',
+                    fontWeight: selected ? 700 : 500,
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                  }}
+                >
+                  {c.icon && <span>{c.icon}</span>}
+                  {c.name_fr}
+                </button>
+              )
+            })}
+          </div>
 
           <label style={labelStyle}>Description *</label>
           <textarea name="description" value={form.description} onChange={handleChange} required
@@ -388,7 +408,7 @@ export default function ServiceForm({ service }: { service?: EditableService }) 
           )}
 
           <button type="submit" disabled={loading} style={{
-            width: '100%', padding: '16px', background: loading ? '#9b7a8a' : '#59364A',
+            width: '100%', padding: '16px', background: loading ? '#d4a090' : '#C77D69',
             color: '#fff', border: 'none', borderRadius: '10px',
             fontSize: '16px', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
           }}>
