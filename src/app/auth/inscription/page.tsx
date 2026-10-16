@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function InscriptionPage() {
   const { signUp } = useAuth()
+  const router = useRouter()
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [needsConfirmation, setNeedsConfirmation] = useState(false)
@@ -36,7 +38,7 @@ export default function InscriptionPage() {
     }
 
     // Session ouverte : le profil se complète à l'étape suivante
-    window.location.href = '/inscription/profil'
+    router.replace('/inscription/profil')
   }
 
   const inputStyle = {

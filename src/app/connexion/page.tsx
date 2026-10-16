@@ -2,12 +2,13 @@
 
 import { Suspense, useState, type ChangeEvent, type FormEvent } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 
 function ConnexionForm() {
   const { signIn } = useAuth()
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
@@ -37,8 +38,7 @@ function ConnexionForm() {
     const { data: { user } } = await supabase.auth.getUser()
     const { data: profile } = await supabase.from('profiles').select('id').eq('id', user?.id ?? '').maybeSingle()
 
-    // Navigation complète pour que le proxy voie les nouveaux cookies de session
-    window.location.href = profile ? redirect : '/inscription/profil'
+    router.replace(profile ? redirect : '/inscription/profil')
   }
 
   const inputStyle = {

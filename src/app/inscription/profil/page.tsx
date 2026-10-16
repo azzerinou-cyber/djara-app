@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, type CSSProperties, type ChangeEvent, type FormEvent } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -12,6 +13,7 @@ type Mode = '' | 'cherche' | 'propose'
 
 export default function InscriptionProfilPage() {
   const { user, profile, loading: authLoading, refreshProfile } = useAuth()
+  const router = useRouter()
   const [mode, setMode] = useState<Mode>('')
   const [form, setForm] = useState({
     display_name: '',
@@ -120,7 +122,7 @@ export default function InscriptionProfilPage() {
     }
 
     await refreshProfile()
-    window.location.href = mode === 'cherche' ? '/rechercher' : '/publier'
+    router.replace(mode === 'cherche' ? '/rechercher' : '/publier')
   }
 
   const inp: CSSProperties = {
