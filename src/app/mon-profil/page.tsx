@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import BottomNav from '@/components/BottomNav';
+import { useTranslation } from '@/i18n';
 
-type Lang = 'fr' | 'ar';
 type Onglet = 'profil' | 'services' | 'avis' | 'parametres';
 
 interface ServiceRow {
@@ -28,8 +28,8 @@ interface ReviewRow {
 export default function MonProfilPage() {
   const router = useRouter();
   const { user, profile, loading: authLoading, signOut } = useAuth();
-  const [lang, setLang] = useState<Lang>('fr');
-  const isRTL = lang === 'ar';
+  const { lang, setLang, tx, isRTL } = useTranslation();
+
   const [onglet, setOnglet] = useState<Onglet>('profil');
   const [disponible, setDisponible] = useState(true);
   const [profilVisible, setProfilVisible] = useState(true);
@@ -120,106 +120,15 @@ export default function MonProfilPage() {
     router.replace('/');
   };
 
-  const t = {
-    fr: {
-      titre: 'Mon Profil',
-      modifier: 'Modifier',
-      profil: 'Profil',
-      services: 'Services',
-      avis: 'Avis',
-      parametres: 'Paramètres',
-      membre: 'Membre depuis',
-      niveauConfiance: 'Niveau de confiance',
-      niveau: ['', 'Téléphone vérifié', 'Identité vérifiée', 'Profil de confiance'],
-      disponible: 'Disponible',
-      indisponible: 'Indisponible',
-      modePrestataire: 'Mode Prestataire',
-      modeCherche: 'Je cherche',
-      profilVisible: 'Profil visible',
-      profilCache: 'Profil masqué',
-      statistiques: 'Statistiques',
-      totalAvis: 'Avis reçus',
-      totalPrestations: 'Services',
-      noteGlobale: 'Note globale',
-      vuesProfile: 'Vues profil',
-      mesServices: 'Mes services',
-      ajouterService: '+ Ajouter un service',
-      aucunService: "Vous n'avez pas encore ajouté de service.",
-      avisRecus: 'Avis reçus',
-      aucunAvis: "Vous n'avez pas encore reçu d'avis.",
-      securite: 'Sécurité & Confidentialité',
-      notifications: 'Notifications',
-      langue: 'Langue',
-      aide: 'Aide & Support',
-      deconnexion: 'Se déconnecter',
-      suppressionCompte: 'Supprimer mon compte',
-      politiqueConf: 'Politique de confidentialité',
-      cgv: "Conditions d'utilisation",
-      suppressionConfirmWord: 'SUPPRIMER',
-      suppressionConfirmLabel: 'Pour confirmer, saisissez exactement : SUPPRIMER',
-      suppressionWarning: 'Cette action est irréversible. Votre compte, vos services, vos messages et votre historique seront définitivement supprimés, conformément à la loi 18-07.',
-      suppressionBtn: 'Supprimer définitivement',
-      suppressionLoading: 'Suppression en cours...',
-      annuler: 'Annuler',
-      verifierIdentite: 'Vérifier mon identité',
-      verifierTel: 'Téléphone vérifié ✓',
-      bio: 'À propos de moi',
-      partager: 'Partager mon profil',
-      voir: 'Voir mon profil public',
-      chargement: 'Chargement...',
-      actif: 'Actif',
-      inactif: 'Inactif',
-    },
-    ar: {
-      titre: 'ملفي الشخصي',
-      modifier: 'تعديل',
-      profil: 'الملف',
-      services: 'الخدمات',
-      avis: 'التقييمات',
-      parametres: 'الإعدادات',
-      membre: 'عضو منذ',
-      niveauConfiance: 'مستوى الثقة',
-      niveau: ['', 'هاتف موثق', 'هوية موثقة', 'ملف موثوق'],
-      disponible: 'متاحة',
-      indisponible: 'غير متاحة',
-      modePrestataire: 'وضع مزودة الخدمة',
-      modeCherche: 'أبحث عن خدمة',
-      profilVisible: 'الملف مرئي',
-      profilCache: 'الملف مخفي',
-      statistiques: 'الإحصائيات',
-      totalAvis: 'التقييمات',
-      totalPrestations: 'الخدمات',
-      noteGlobale: 'التقييم العام',
-      vuesProfile: 'مشاهدات الملف',
-      mesServices: 'خدماتي',
-      ajouterService: '+ إضافة خدمة',
-      aucunService: 'لم تضيفي أي خدمة بعد.',
-      avisRecus: 'التقييمات المستلمة',
-      aucunAvis: 'لم تستلمي أي تقييم بعد.',
-      securite: 'الأمان والخصوصية',
-      notifications: 'الإشعارات',
-      langue: 'اللغة',
-      aide: 'المساعدة والدعم',
-      deconnexion: 'تسجيل الخروج',
-      suppressionCompte: 'حذف حسابي',
-      politiqueConf: 'سياسة الخصوصية',
-      cgv: 'شروط الاستخدام',
-      suppressionConfirmWord: 'حذف',
-      suppressionConfirmLabel: 'للتأكيد، اكتبي بالضبط: حذف',
-      suppressionWarning: 'هذا الإجراء لا يمكن التراجع عنه. سيتم حذف حسابك وخدماتك ورسائلك وسجلك نهائيًا وفقًا للقانون 18-07.',
-      suppressionBtn: 'حذف نهائي',
-      suppressionLoading: '...جاري الحذف',
-      annuler: 'إلغاء',
-      verifierIdentite: 'التحقق من هويتي',
-      verifierTel: 'الهاتف موثق ✓',
-      bio: 'نبذة عني',
-      partager: 'مشاركة ملفي',
-      voir: 'عرض ملفي العام',
-      chargement: '...جاري التحميل',
-      actif: 'نشط',
-      inactif: 'غير نشط',
-    },
-  }[lang];
+  // Helper : label d'un niveau de confiance (1–3)
+  const niveauLabel = (n: number): string => {
+    const map: Record<number, string> = {
+      1: tx.monProfil.niveaux.n1,
+      2: tx.monProfil.niveaux.n2,
+      3: tx.monProfil.niveaux.n3,
+    };
+    return map[n] ?? '';
+  };
 
   // Écran de chargement pendant la résolution de l'auth
   if (authLoading) {
@@ -227,7 +136,7 @@ export default function MonProfilPage() {
       <div style={{ minHeight: '100vh', background: '#FAF7F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>🌸</div>
-          <p style={{ color: '#59364A', fontWeight: 600 }}>{t.chargement}</p>
+          <p style={{ color: '#59364A', fontWeight: 600 }}>{tx.monProfil.chargement}</p>
         </div>
       </div>
     );
@@ -269,7 +178,7 @@ export default function MonProfilPage() {
 
       {/* Header */}
       <header style={{ background: '#59364A', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
-        <span style={{ color: '#FAF7F2', fontSize: 16, fontWeight: 800 }}>{t.titre}</span>
+        <span style={{ color: '#FAF7F2', fontSize: 16, fontWeight: 800 }}>{tx.monProfil.titre}</span>
         <button
           onClick={() => setLang(lang === 'fr' ? 'ar' : 'fr')}
           style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FAF7F2', borderRadius: 20, padding: '5px 12px', cursor: 'pointer', fontSize: 12 }}
@@ -312,7 +221,7 @@ export default function MonProfilPage() {
               </div>
             )}
             <div style={{ color: 'rgba(250,247,242,0.4)', fontSize: 11, marginTop: 2 }}>
-              🗓 {t.membre} {membreSince}
+              🗓 {tx.monProfil.membre} {membreSince}
             </div>
           </div>
 
@@ -320,7 +229,7 @@ export default function MonProfilPage() {
             href="/mon-profil/modifier"
             style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#FAF7F2', borderRadius: 20, padding: '6px 14px', cursor: 'pointer', fontSize: 12, flexShrink: 0, textDecoration: 'none' }}
           >
-            {t.modifier}
+            {tx.monProfil.modifier}
           </Link>
         </div>
 
@@ -330,7 +239,7 @@ export default function MonProfilPage() {
           <span
             style={{ background: disponible ? 'rgba(76,175,80,0.25)' : 'rgba(255,255,255,0.1)', border: `1px solid ${disponible ? 'rgba(76,175,80,0.5)' : 'rgba(255,255,255,0.2)'}`, color: disponible ? '#81c784' : 'rgba(255,255,255,0.5)', fontSize: 11, padding: '5px 12px', borderRadius: 20 }}
           >
-            {disponible ? `● ${t.disponible}` : `○ ${t.indisponible}`}
+            {disponible ? `● ${tx.monProfil.disponible}` : `○ ${tx.monProfil.indisponible}`}
           </span>
           <button
             onClick={async () => {
@@ -340,7 +249,7 @@ export default function MonProfilPage() {
             }}
             style={{ background: profilVisible ? 'rgba(168,181,162,0.2)' : 'rgba(255,100,100,0.15)', border: `1px solid ${profilVisible ? 'rgba(168,181,162,0.4)' : 'rgba(255,100,100,0.3)'}`, color: profilVisible ? '#A8B5A2' : '#ef9a9a', fontSize: 11, padding: '5px 12px', borderRadius: 20, cursor: 'pointer' }}
           >
-            {profilVisible ? `👁 ${t.profilVisible}` : `🙈 ${t.profilCache}`}
+            {profilVisible ? `👁 ${tx.monProfil.profilVisible}` : `🙈 ${tx.monProfil.profilCache}`}
           </button>
           <button
             onClick={async () => {
@@ -350,7 +259,7 @@ export default function MonProfilPage() {
             }}
             style={{ background: modePrestataire ? 'rgba(199,125,105,0.25)' : 'rgba(255,255,255,0.1)', border: `1px solid ${modePrestataire ? 'rgba(199,125,105,0.5)' : 'rgba(255,255,255,0.2)'}`, color: modePrestataire ? '#C77D69' : 'rgba(255,255,255,0.5)', fontSize: 11, padding: '5px 12px', borderRadius: 20, cursor: 'pointer' }}
           >
-            {modePrestataire ? `💼 ${t.modePrestataire}` : `🔍 ${t.modeCherche}`}
+            {modePrestataire ? `💼 ${tx.monProfil.modePrestataire}` : `🔍 ${tx.monProfil.modeCherche}`}
           </button>
         </div>
 
@@ -361,7 +270,7 @@ export default function MonProfilPage() {
               key={n}
               style={{ background: n <= trustLevel ? 'rgba(168,181,162,0.3)' : 'rgba(255,255,255,0.05)', border: `1px solid ${n <= trustLevel ? '#A8B5A2' : 'rgba(255,255,255,0.1)'}`, color: n <= trustLevel ? '#c8d8c2' : 'rgba(255,255,255,0.2)', fontSize: 10, padding: '3px 10px', borderRadius: 20 }}
             >
-              {n <= trustLevel ? '✓' : '○'} {t.niveau[n]}
+              {n <= trustLevel ? '✓' : '○'} {niveauLabel(n)}
             </span>
           ))}
         </div>
@@ -370,10 +279,10 @@ export default function MonProfilPage() {
       {/* Stats rapides */}
       <div style={{ background: '#fff', padding: '16px 20px', display: 'flex', justifyContent: 'space-around', borderBottom: '1px solid #f0e8e0' }}>
         {[
-          { val: avgRating ?? '—', label: t.noteGlobale, icon: '⭐' },
-          { val: reviews.length, label: t.totalAvis, icon: '💬' },
-          { val: activeServices.length, label: t.totalPrestations, icon: '✅' },
-          { val: trustLevel, label: t.niveauConfiance, icon: '🛡️' },
+          { val: avgRating ?? '—', label: tx.monProfil.noteGlobale, icon: '⭐' },
+          { val: reviews.length, label: tx.monProfil.totalAvis, icon: '💬' },
+          { val: activeServices.length, label: tx.monProfil.totalPrestations, icon: '✅' },
+          { val: trustLevel, label: tx.monProfil.niveauConfiance, icon: '🛡️' },
         ].map((s, i) => (
           <div key={i} style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 11, marginBottom: 2 }}>{s.icon}</div>
@@ -389,13 +298,13 @@ export default function MonProfilPage() {
           href={`/profil/${user.id}`}
           style={{ flex: 1, padding: '10px', background: '#fff', border: '1px solid #e8ddd6', borderRadius: 12, color: '#59364A', fontSize: 12, fontWeight: 600, textDecoration: 'none', textAlign: 'center', display: 'block' }}
         >
-          👁 {t.voir}
+          👁 {tx.monProfil.voir}
         </Link>
         <button
           onClick={() => { if (typeof navigator !== 'undefined') navigator.clipboard.writeText(`${window.location.origin}/profil/${user.id}`); }}
           style={{ flex: 1, padding: '10px', background: '#fff', border: '1px solid #e8ddd6', borderRadius: 12, color: '#59364A', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
         >
-          🔗 {t.partager}
+          🔗 {tx.monProfil.partager}
         </button>
       </div>
 
@@ -407,7 +316,7 @@ export default function MonProfilPage() {
             onClick={() => setOnglet(o)}
             style={{ flex: 1, padding: '12px 0', background: 'none', border: 'none', borderBottom: onglet === o ? '2px solid #59364A' : '2px solid transparent', color: onglet === o ? '#59364A' : '#bbb', fontSize: 12, fontWeight: onglet === o ? 700 : 400, cursor: 'pointer' }}
           >
-            {o === 'profil' ? t.profil : o === 'services' ? t.services : o === 'avis' ? t.avis : t.parametres}
+            {o === 'profil' ? tx.monProfil.profil : o === 'services' ? tx.monProfil.services : o === 'avis' ? tx.monProfil.avis : tx.monProfil.parametres}
           </button>
         ))}
       </div>
@@ -419,25 +328,25 @@ export default function MonProfilPage() {
         {onglet === 'profil' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ background: '#fff', borderRadius: 16, padding: 16 }}>
-              <div style={{ color: '#59364A', fontWeight: 800, fontSize: 13, marginBottom: 8 }}>{t.bio}</div>
+              <div style={{ color: '#59364A', fontWeight: 800, fontSize: 13, marginBottom: 8 }}>{tx.monProfil.bio}</div>
               {bio ? (
                 <p style={{ color: '#555', fontSize: 13, lineHeight: 1.6, margin: 0 }}>{bio}</p>
               ) : (
                 <p style={{ color: '#bbb', fontSize: 13, fontStyle: 'italic', margin: 0 }}>
-                  {lang === 'fr' ? 'Aucune description pour le moment.' : 'لا توجد نبذة حتى الآن.'}
+                  {tx.monProfil.aucuneBio}
                 </p>
               )}
               <Link
                 href="/mon-profil/modifier"
                 style={{ marginTop: 10, display: 'block', background: 'none', border: '1px dashed #C77D69', color: '#C77D69', borderRadius: 10, padding: '8px 14px', fontSize: 12, textAlign: 'center', textDecoration: 'none' }}
               >
-                ✏️ {t.modifier}
+                ✏️ {tx.monProfil.modifier}
               </Link>
             </div>
 
             {phone && (
               <div style={{ background: '#fff', borderRadius: 16, padding: 16 }}>
-                <div style={{ color: '#59364A', fontWeight: 800, fontSize: 13, marginBottom: 10 }}>📱 {t.verifierTel}</div>
+                <div style={{ color: '#59364A', fontWeight: 800, fontSize: 13, marginBottom: 10 }}>📱 {tx.monProfil.verifierTel}</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: '#555', fontSize: 13 }}>{phone}</span>
                   <span style={{ background: '#e8f5e9', color: '#2e7d32', fontSize: 11, padding: '3px 10px', borderRadius: 10 }}>✓ Vérifié</span>
@@ -447,14 +356,12 @@ export default function MonProfilPage() {
 
             {!profile.identity_verified && (
               <div style={{ background: 'linear-gradient(135deg, #fff8f0, #fff3e8)', borderRadius: 16, padding: 16, border: '1px solid #f0d8c8' }}>
-                <div style={{ color: '#59364A', fontWeight: 800, fontSize: 13, marginBottom: 6 }}>🔐 {t.verifierIdentite}</div>
+                <div style={{ color: '#59364A', fontWeight: 800, fontSize: 13, marginBottom: 6 }}>🔐 {tx.monProfil.verifierIdentite}</div>
                 <p style={{ color: '#888', fontSize: 12, lineHeight: 1.5, margin: '0 0 10px' }}>
-                  {lang === 'fr'
-                    ? 'Augmentez la confiance de vos clientes en vérifiant votre identité. Vos documents sont traités de façon confidentielle.'
-                    : 'زيدي ثقة زبوناتك عبر توثيق هويتك. وثائقك تُعالَج بسرية تامة.'}
+                  {tx.monProfil.verifierIdentiteDetail}
                 </p>
                 <button style={{ background: '#59364A', color: '#FAF7F2', border: 'none', borderRadius: 20, padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', width: '100%' }}>
-                  {t.verifierIdentite} →
+                  {tx.monProfil.verifierIdentite} →
                 </button>
               </div>
             )}
@@ -465,23 +372,23 @@ export default function MonProfilPage() {
         {onglet === 'services' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-              <span style={{ color: '#59364A', fontWeight: 800, fontSize: 14 }}>{t.mesServices}</span>
+              <span style={{ color: '#59364A', fontWeight: 800, fontSize: 14 }}>{tx.monProfil.mesServices}</span>
               <Link href="/publier" style={{ background: '#C77D69', color: '#fff', borderRadius: 20, padding: '7px 16px', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
-                {t.ajouterService}
+                {tx.monProfil.ajouterService}
               </Link>
             </div>
 
             {dataLoading ? (
-              <div style={{ textAlign: 'center', padding: 32, color: '#bbb' }}>{t.chargement}</div>
+              <div style={{ textAlign: 'center', padding: 32, color: '#bbb' }}>{tx.monProfil.chargement}</div>
             ) : services.length === 0 ? (
               <div style={{ background: '#fff', borderRadius: 16, padding: '28px 20px', textAlign: 'center' }}>
                 <div style={{ fontSize: 36, marginBottom: 10 }}>🌱</div>
                 <p style={{ color: '#59364A', fontWeight: 700, margin: '0 0 6px' }}>
-                  {lang === 'fr' ? 'Aucun service encore' : 'لا توجد خدمات بعد'}
+                  {tx.monProfil.aucunServiceTitre}
                 </p>
-                <p style={{ color: '#999', fontSize: 13, margin: '0 0 14px' }}>{t.aucunService}</p>
+                <p style={{ color: '#999', fontSize: 13, margin: '0 0 14px' }}>{tx.monProfil.aucunService}</p>
                 <Link href="/publier" style={{ background: '#59364A', color: '#FAF7F2', borderRadius: 20, padding: '10px 20px', fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>
-                  {t.ajouterService}
+                  {tx.monProfil.ajouterService}
                 </Link>
               </div>
             ) : (
@@ -493,7 +400,7 @@ export default function MonProfilPage() {
                   </div>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <span style={{ background: s.status === 'active' ? '#e8f5e9' : '#fafafa', color: s.status === 'active' ? '#2e7d32' : '#bbb', fontSize: 10, padding: '3px 10px', borderRadius: 10, border: `1px solid ${s.status === 'active' ? '#c8e6c9' : '#e0e0e0'}` }}>
-                      {s.status === 'active' ? t.actif : t.inactif}
+                      {s.status === 'active' ? tx.monProfil.actif : tx.monProfil.inactif}
                     </span>
                     <Link href={`/publier/${s.id}`} style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', textDecoration: 'none', color: '#292929', padding: '4px 8px' }}>✏️</Link>
                   </div>
@@ -511,23 +418,23 @@ export default function MonProfilPage() {
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 36, fontWeight: 900, color: '#59364A' }}>{avgRating}</div>
                   <div style={{ color: '#C77D69', fontSize: 14 }}>{'★'.repeat(Math.round(avgRating))}</div>
-                  <div style={{ color: '#bbb', fontSize: 11 }}>{reviews.length} {t.totalAvis}</div>
+                  <div style={{ color: '#bbb', fontSize: 11 }}>{reviews.length} {tx.monProfil.totalAvis}</div>
                 </div>
                 <div style={{ flex: 1, color: '#555', fontSize: 13 }}>
-                  {lang === 'fr' ? 'Continuez à offrir un service de qualité !' : 'استمري في تقديم خدمة ممتازة!'}
+                  {tx.monProfil.encouragementAvis}
                 </div>
               </div>
             )}
 
             {dataLoading ? (
-              <div style={{ textAlign: 'center', padding: 32, color: '#bbb' }}>{t.chargement}</div>
+              <div style={{ textAlign: 'center', padding: 32, color: '#bbb' }}>{tx.monProfil.chargement}</div>
             ) : reviews.length === 0 ? (
               <div style={{ background: '#fff', borderRadius: 16, padding: '28px 20px', textAlign: 'center' }}>
                 <div style={{ fontSize: 36, marginBottom: 10 }}>💬</div>
                 <p style={{ color: '#59364A', fontWeight: 700, margin: '0 0 6px' }}>
-                  {lang === 'fr' ? 'Aucun avis encore' : 'لا توجد تقييمات بعد'}
+                  {tx.monProfil.aucunAvisTitre}
                 </p>
-                <p style={{ color: '#999', fontSize: 13, margin: 0 }}>{t.aucunAvis}</p>
+                <p style={{ color: '#999', fontSize: 13, margin: 0 }}>{tx.monProfil.aucunAvis}</p>
               </div>
             ) : (
               reviews.map(a => (
@@ -539,7 +446,7 @@ export default function MonProfilPage() {
                       </div>
                       <div>
                         <div style={{ fontWeight: 700, color: '#292929', fontSize: 13 }}>
-                          {a.reviewer?.display_name ?? (lang === 'fr' ? 'Utilisatrice' : 'مستخدمة')}
+                          {a.reviewer?.display_name ?? tx.monProfil.utilisatrice}
                         </div>
                         <div style={{ color: '#bbb', fontSize: 11 }}>{timeAgo(a.created_at)}</div>
                       </div>
@@ -559,12 +466,12 @@ export default function MonProfilPage() {
         {onglet === 'parametres' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
-              { icon: '🔔', label: t.notifications, href: '#' },
-              { icon: '🌐', label: `${t.langue} (${lang === 'fr' ? 'Français' : 'العربية'})`, href: '#' },
-              { icon: '🔒', label: t.securite, href: '#' },
-              { icon: '❓', label: t.aide, href: '#' },
-              { icon: '📄', label: t.politiqueConf, href: '/politique-confidentialite' },
-              { icon: '📋', label: t.cgv, href: '/conditions-utilisation' },
+              { icon: '🔔', label: tx.monProfil.notifications, href: '#' },
+              { icon: '🌐', label: `${tx.monProfil.langue} (${lang === 'fr' ? 'Français' : 'العربية'})`, href: '#' },
+              { icon: '🔒', label: tx.monProfil.securite, href: '#' },
+              { icon: '❓', label: tx.monProfil.aide, href: '#' },
+              { icon: '📄', label: tx.monProfil.politiqueConf, href: '/politique-confidentialite' },
+              { icon: '📋', label: tx.monProfil.cgv, href: '/conditions-utilisation' },
             ].map((item, i) => (
               <Link
                 key={i}
@@ -589,7 +496,7 @@ export default function MonProfilPage() {
               <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                 <span style={{ fontSize: 18 }}>🚪</span>
                 <span style={{ color: '#C77D69', fontSize: 14, fontWeight: 600 }}>
-                  {signOutLoading ? '...' : t.deconnexion}
+                  {signOutLoading ? '...' : tx.monProfil.deconnexion}
                 </span>
               </div>
               <span style={{ color: '#bbb' }}>›</span>
@@ -601,13 +508,13 @@ export default function MonProfilPage() {
             >
               <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                 <span style={{ fontSize: 18 }}>🗑</span>
-                <span style={{ color: '#e53935', fontSize: 13, fontWeight: 600 }}>{t.suppressionCompte}</span>
+                <span style={{ color: '#e53935', fontSize: 13, fontWeight: 600 }}>{tx.monProfil.suppressionCompte}</span>
               </div>
               <span style={{ color: '#bbb' }}>›</span>
             </button>
 
             <div style={{ textAlign: 'center', marginTop: 16, color: '#bbb', fontSize: 11 }}>
-              DJARA v1.0.0 — {lang === 'fr' ? 'Le talent des femmes, tout près de vous' : 'موهبة المرأة، قريبة منك'}
+              DJARA v1.0.0 — {tx.common.app.tagline}
             </div>
           </div>
         )}
@@ -625,39 +532,39 @@ export default function MonProfilPage() {
             <div style={{ textAlign: 'center', marginBottom: 20 }}>
               <div style={{ fontSize: 40, marginBottom: 8 }}>⚠️</div>
               <h2 style={{ color: '#292929', fontSize: 18, fontWeight: 700, margin: 0 }}>
-                {t.suppressionCompte}
+                {tx.monProfil.suppressionCompte}
               </h2>
             </div>
 
             <div style={{ background: '#fff3f3', borderRadius: 12, padding: 14, marginBottom: 20, border: '1px solid #ffcccc' }}>
               <p style={{ color: '#e53935', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
-                {t.suppressionWarning}
+                {tx.monProfil.suppressionWarning}
               </p>
             </div>
 
             <p style={{ color: '#666', fontSize: 13, marginBottom: 10 }}>
-              {t.suppressionConfirmLabel}
+              {tx.monProfil.suppressionConfirmLabel}
             </p>
             <input
               type="text"
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
-              placeholder={t.suppressionConfirmWord}
+              placeholder={tx.monProfil.suppressionConfirmWord}
               style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid #ddd', fontSize: 14, marginBottom: 16, boxSizing: 'border-box', direction: isRTL ? 'rtl' : 'ltr' }}
             />
 
             <button
               onClick={handleDeleteAccount}
-              disabled={deleteLoading || deleteConfirmText !== t.suppressionConfirmWord}
+              disabled={deleteLoading || deleteConfirmText !== tx.monProfil.suppressionConfirmWord}
               style={{
                 width: '100%', padding: '14px', borderRadius: 12, border: 'none',
-                background: deleteLoading || deleteConfirmText !== t.suppressionConfirmWord ? '#ccc' : '#e53935',
+                background: deleteLoading || deleteConfirmText !== tx.monProfil.suppressionConfirmWord ? '#ccc' : '#e53935',
                 color: '#fff', fontWeight: 700, fontSize: 15,
-                cursor: deleteLoading || deleteConfirmText !== t.suppressionConfirmWord ? 'not-allowed' : 'pointer',
+                cursor: deleteLoading || deleteConfirmText !== tx.monProfil.suppressionConfirmWord ? 'not-allowed' : 'pointer',
                 marginBottom: 10
               }}
             >
-              {deleteLoading ? t.suppressionLoading : t.suppressionBtn}
+              {deleteLoading ? tx.monProfil.suppressionLoading : tx.monProfil.suppressionBtn}
             </button>
 
             <button
@@ -665,7 +572,7 @@ export default function MonProfilPage() {
               disabled={deleteLoading}
               style={{ width: '100%', padding: '13px', borderRadius: 12, border: '1.5px solid #ddd', background: '#fff', color: '#666', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
             >
-              {t.annuler}
+              {tx.monProfil.annuler}
             </button>
           </div>
         </div>

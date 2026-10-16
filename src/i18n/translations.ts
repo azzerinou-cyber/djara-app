@@ -415,11 +415,22 @@ export const signalement = {
 // ─────────────────────────────────────────────────────────────────────────────
 export const favoris = {
   titre: t('Mes favoris', 'المفضلة'),
-  aucun: t('Aucun favori', 'لا توجد مفضلة'),
-  aucunDetail: t('Enregistrez des prestataires pour les retrouver facilement.', 'احفظي مقدمات الخدمات للرجوع إليهن بسهولة.'),
+  sousTitre: t('Vos prestataires sauvegardées', 'مقدمات الخدمات المحفوظات'),
+  aucun: t('Aucun favori pour l\'instant', 'لا توجد مفضلة حتى الآن'),
+  aucunDetail: t('Enregistrez des prestataires depuis leur profil pour les retrouver facilement ici.', 'احفظي مقدمات الخدمات من ملفاتهن للرجوع إليهن بسهولة.'),
+  explorer: t('Explorer les prestataires', 'استكشاف مقدمات الخدمات'),
   ajouter: t('Enregistrer', 'حفظ'),
-  retirer: t('Retirer des favoris', 'إزالة من المفضلة'),
+  retirer: t('Retirer', 'إزالة'),
+  retrait: t('Retrait…', '...إزالة'),
   enregistre: t('Enregistré !', '!تم الحفظ'),
+  voirProfil: t('Voir le profil', 'عرض الملف'),
+  ajouteLe: t('Ajouté le', 'أُضيف في'),
+  nonConnecte: t('Vous devez être connectée pour accéder à vos favoris.', 'يجب أن تكوني مسجلة الدخول للوصول إلى مفضلتك.'),
+  seConnecter: t('Se connecter', 'تسجيل الدخول'),
+  inactif: t('Profil inactif', 'ملف غير نشط'),
+  chargement: t('Chargement…', '...جاري التحميل'),
+  erreur: t('Erreur de chargement', 'خطأ في التحميل'),
+  reessayer: t('Réessayer', 'إعادة المحاولة'),
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -439,6 +450,147 @@ export const demandeReservation = {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// MON PROFIL
+// ─────────────────────────────────────────────────────────────────────────────
+const monProfil = {
+  titre:                 t('Mon Profil', 'ملفي الشخصي'),
+  modifier:              t('Modifier', 'تعديل'),
+  profil:                t('Profil', 'الملف'),
+  services:              t('Services', 'الخدمات'),
+  avis:                  t('Avis', 'التقييمات'),
+  parametres:            t('Paramètres', 'الإعدادات'),
+  membre:                t('Membre depuis', 'عضو منذ'),
+  niveauConfiance:       t('Niveau de confiance', 'مستوى الثقة'),
+  niveaux: {
+    n1: t('Téléphone vérifié', 'هاتف موثق'),
+    n2: t('Identité vérifiée', 'هوية موثقة'),
+    n3: t('Profil de confiance', 'ملف موثوق'),
+  },
+  disponible:            t('Disponible', 'متاحة'),
+  indisponible:          t('Indisponible', 'غير متاحة'),
+  modePrestataire:       t('Mode Prestataire', 'وضع مزودة الخدمة'),
+  modeCherche:           t('Je cherche', 'أبحث عن خدمة'),
+  profilVisible:         t('Profil visible', 'الملف مرئي'),
+  profilCache:           t('Profil masqué', 'الملف مخفي'),
+  statistiques:          t('Statistiques', 'الإحصائيات'),
+  totalAvis:             t('Avis reçus', 'التقييمات'),
+  totalPrestations:      t('Services', 'الخدمات'),
+  noteGlobale:           t('Note globale', 'التقييم العام'),
+  vuesProfile:           t('Vues profil', 'مشاهدات الملف'),
+  mesServices:           t('Mes services', 'خدماتي'),
+  ajouterService:        t('+ Ajouter un service', '+ إضافة خدمة'),
+  aucunService:          t("Vous n'avez pas encore ajouté de service.", 'لم تضيفي أي خدمة بعد.'),
+  avisRecus:             t('Avis reçus', 'التقييمات المستلمة'),
+  aucunAvis:             t("Vous n'avez pas encore reçu d'avis.", 'لم تستلمي أي تقييم بعد.'),
+  securite:              t('Sécurité & Confidentialité', 'الأمان والخصوصية'),
+  notifications:         t('Notifications', 'الإشعارات'),
+  langue:                t('Langue', 'اللغة'),
+  aide:                  t('Aide & Support', 'المساعدة والدعم'),
+  deconnexion:           t('Se déconnecter', 'تسجيل الخروج'),
+  suppressionCompte:     t('Supprimer mon compte', 'حذف حسابي'),
+  politiqueConf:         t('Politique de confidentialité', 'سياسة الخصوصية'),
+  cgv:                   t("Conditions d'utilisation", 'شروط الاستخدام'),
+  suppressionConfirmWord:t('SUPPRIMER', 'حذف'),
+  suppressionConfirmLabel:t('Pour confirmer, saisissez exactement : SUPPRIMER', 'للتأكيد، اكتبي بالضبط: حذف'),
+  suppressionWarning:    t(
+    'Cette action est irréversible. Votre compte, vos services, vos messages et votre historique seront définitivement supprimés, conformément à la loi 18-07.',
+    'هذا الإجراء لا يمكن التراجع عنه. سيتم حذف حسابك وخدماتك ورسائلك وسجلك نهائيًا وفقًا للقانون 18-07.'
+  ),
+  suppressionBtn:        t('Supprimer définitivement', 'حذف نهائي'),
+  suppressionLoading:    t('Suppression en cours...', '...جاري الحذف'),
+  annuler:               t('Annuler', 'إلغاء'),
+  verifierIdentite:      t('Vérifier mon identité', 'التحقق من هويتي'),
+  verifierIdentiteDetail:t(
+    'Augmentez la confiance de vos clientes en vérifiant votre identité. Vos documents sont traités de façon confidentielle.',
+    'زيدي ثقة زبوناتك عبر توثيق هويتك. وثائقك تُعالَج بسرية تامة.'
+  ),
+  verifierTel:           t('Téléphone vérifié ✓', 'الهاتف موثق ✓'),
+  bio:                   t('À propos de moi', 'نبذة عني'),
+  aucuneBio:             t('Aucune description pour le moment.', 'لا توجد نبذة حتى الآن.'),
+  partager:              t('Partager mon profil', 'مشاركة ملفي'),
+  voir:                  t('Voir mon profil public', 'عرض ملفي العام'),
+  chargement:            t('Chargement...', '...جاري التحميل'),
+  actif:                 t('Actif', 'نشط'),
+  inactif:               t('Inactif', 'غير نشط'),
+  aucunServiceTitre:     t('Aucun service encore', 'لا توجد خدمات بعد'),
+  encouragementAvis:     t('Continuez à offrir un service de qualité !', 'استمري في تقديم خدمة ممتازة!'),
+  aucunAvisTitre:        t('Aucun avis encore', 'لا توجد تقييمات بعد'),
+  utilisatrice:          t('Utilisatrice', 'مستخدمة'),
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROFIL PUBLIC — src/app/profil/[id]/ProfilClient.tsx
+// ─────────────────────────────────────────────────────────────────────────────
+const profilPublic = {
+  // Actions
+  contacter:                  t('Contacter', 'تواصل'),
+  demanderPrestation:         t('Demander une prestation', 'طلب خدمة'),
+  prendre_rdv:                t('Prendre RDV', 'حجز موعد'),
+  retour:                     t('Retour', 'رجوع'),
+  annuler:                    t('Annuler', 'إلغاء'),
+  fermer:                     t('✕ Fermer', '✕ إغلاق'),
+  // Onglets
+  services:                   t('Services', 'الخدمات'),
+  galerie:                    t('Galerie', 'معرض الأعمال'),
+  avis:                       t('Avis', 'التقييمات'),
+  // États
+  disponible:                 t('Disponible', 'متاحة'),
+  indisponible:               t('Indisponible', 'غير متاحة'),
+  verifie:                    t('Profil vérifié', 'ملف موثق'),
+  chargement:                 t('Chargement...', '...جاري التحميل'),
+  introuvable:                t('Profil introuvable', 'الملف غير موجود'),
+  niveauConfiance:            t('Niveau de confiance', 'مستوى الثقة'),
+  // États vides
+  aucunService:               t("Aucun service publié pour l'instant", 'لا توجد خدمات منشورة حالياً'),
+  aucuneRealisation:          t("Aucune réalisation pour l'instant", 'لا توجد أعمال منشورة حالياً'),
+  aucunAvis:                  t("Aucun avis pour l'instant", 'لا توجد تقييمات حالياً'),
+  // Tarifs
+  tarif:                      t('Tarif indicatif', 'السعر التقريبي'),
+  aPartirDe:                  t('À partir de', 'ابتداءً من'),
+  DA:                         t('DA', 'دج'),
+  jusquA:                     t("Jusqu'à", 'حتى'),
+  prixADefinir:               t('Prix à définir', 'السعر غير محدد'),
+  // Favoris
+  ajouterFavoris:             t('Enregistrer', 'إضافة للمفضلة'),
+  retirerFavoris:             t('Retirer des favoris', 'إزالة من المفضلة'),
+  // Modal réservation
+  demandePrestation:          t('Demande de prestation', 'طلب خدمة'),
+  choisirService:             t('Choisir un service', 'اختيار الخدمة'),
+  selectionnerService:        t('Sélectionner un service', 'اختر خدمة'),
+  datePreferee:               t('Date préférée (optionnel)', 'التاريخ المفضل (اختياري)'),
+  votreMess:                  t('Votre message / précisions', 'رسالتك / تفاصيل'),
+  messPlaceholder:            t('Décrivez votre besoin, vos contraintes...', 'صفي احتياجاتك...'),
+  envoyer:                    t('Envoyer la demande', 'إرسال الطلب'),
+  envoi:                      t('Envoi en cours...', 'جاري الإرسال...'),
+  demandeEnvoyee:             t('Demande envoyée !', 'تم إرسال الطلب!'),
+  repondraRapidement:         t('recevra votre demande et vous répondra rapidement.', 'ستتلقى طلبك وستردّ عليك قريباً.'),
+  voirReservations:           t('Voir mes réservations', 'عرض حجوزاتي'),
+  erreurReserv:               t("Impossible d'envoyer la demande. Réessayez.", 'تعذر إرسال الطلب. أعيدي المحاولة.'),
+  // Modal signalement
+  signaler:                   t('Signaler', 'إبلاغ'),
+  signalerProfil:             t('Signaler ce profil', 'الإبلاغ عن هذا الملف'),
+  raisonSignalement:          t('Motif du signalement', 'سبب الإبلاغ'),
+  raisonPlaceholder:          t('Décrivez le problème...', 'صفي المشكلة...'),
+  signalerBtn:                t('Signaler', 'إبلاغ'),
+  signalerEnvoi:              t('Envoi...', '...إرسال'),
+  signalerMerci:              t('Merci, votre signalement a été transmis.', 'شكراً، تم إرسال بلاغك.'),
+  signalerErreur:             t("Impossible d'envoyer le signalement.", 'تعذر إرسال البلاغ.'),
+  comportement_inapproprie:   t('Comportement inapproprié', 'سلوك غير لائق'),
+  faux_profil:                t('Faux profil / usurpation', 'ملف مزيف / انتحال'),
+  arnaque:                    t('Arnaque / fraude', 'احتيال / نصب'),
+  contenu_choquant:           t('Contenu choquant', 'محتوى مسيء'),
+  autre:                      t('Autre', 'أخرى'),
+  // Avis / évaluations
+  avisVerifies:               t('avis vérifiés', 'تقييمات موثقة'),
+  utilisatriceAnonyme:        t('Utilisatrice anonyme', 'مستخدمة مجهولة'),
+  ponctualite:                t('Ponctualité', 'الالتزام بالمواعيد'),
+  communication:              t('Communication', 'التواصل'),
+  qualite:                    t('Qualité', 'الجودة'),
+  // Localisation
+  localisationNonRenseignee:  t('Localisation non renseignée', 'الموقع غير محدد'),
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // EXPORT GLOBAL
 // ─────────────────────────────────────────────────────────────────────────────
 export const translations = {
@@ -455,6 +607,8 @@ export const translations = {
   signalement,
   favoris,
   demandeReservation,
+  monProfil,
+  profilPublic,
 }
 
 export type Translations = typeof translations

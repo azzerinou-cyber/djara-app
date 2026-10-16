@@ -4,219 +4,139 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import BottomNav from '@/components/BottomNav'
+import { useTranslation } from '@/i18n'
 
-type Lang = 'fr' | 'ar'
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 type Onglet = 'services' | 'galerie' | 'avis'
 
 interface Profile {
   id: string
   display_name: string
-  business_name: string | null
-  bio: string | null
-  avatar_url: string | null
-  commune: string | null
-  wilaya: string | null
+  business_name?: string
+  bio?: string
+  avatar_url?: string
+  commune?: string
+  wilaya?: string
   trust_level: number
   is_active: boolean
-  profile_type: string | null
+  profile_type: string
 }
 
 interface Service {
   id: string
   title: string
-  description: string | null
-  category: string | null
-  price_min: number | null
-  price_max: number | null
+  description?: string
+  category?: string
+  price_min?: number | null
+  price_max?: number | null
   status: string
-  categories: { name_fr: string; icon: string | null } | null
+  categories?: { name_fr: string; icon?: string }
 }
 
 interface PortfolioImage {
   id: string
   url: string
-  caption: string | null
+  caption?: string
   sort_order: number
 }
 
 interface Review {
   id: string
   rating: number
-  comment: string | null
-  punctuality: number | null
-  communication: number | null
-  quality: number | null
+  comment?: string
+  punctuality?: number
+  communication?: number
+  quality?: number
   created_at: string
-  reviewer: { display_name: string } | null
+  reviewer?: { display_name: string }
 }
 
-const t = {
-  fr: {
-    contacter: 'Contacter',
-    demanderPrestation: 'Demander une prestation',
-    services: 'Services',
-    galerie: 'Galerie',
-    avis: 'Avis',
-    disponible: 'Disponible',
-    indisponible: 'Indisponible',
-    tarif: 'Tarif indicatif',
-    verifie: 'Profil vérifié',
-    retour: 'Retour',
-    chargement: 'Chargement...',
-    introuvable: 'Profil introuvable',
-    niveauConfiance: 'Niveau de confiance',
-    aucunService: 'Aucun service publié pour l\'instant',
-    aucuneRealisation: 'Aucune réalisation pour l\'instant',
-    aucunAvis: 'Aucun avis pour l\'instant',
-    aPartirDe: 'À partir de',
-    DA: 'DA',
-    prendre_rdv: 'Prendre RDV',
-    // Booking modal
-    demandePrestation: 'Demande de prestation',
-    choisirService: 'Choisir un service',
-    datePreferee: 'Date préférée (optionnel)',
-    votreMess: 'Votre message / précisions',
-    messPlaceholder: 'Décrivez votre besoin, vos contraintes...',
-    envoyer: 'Envoyer la demande',
-    annuler: 'Annuler',
-    envoi: 'Envoi en cours...',
-    demandeEnvoyee: 'Demande envoyée !',
-    voirReservations: 'Voir mes réservations',
-    erreurReserv: 'Impossible d\'envoyer la demande. Réessayez.',
-    selectionnerService: 'Sélectionner un service',
-    // Signalement
-    signaler: 'Signaler',
-    signalerProfil: 'Signaler ce profil',
-    raisonSignalement: 'Motif du signalement',
-    raisonPlaceholder: 'Décrivez le problème...',
-    signalerBtn: 'Signaler',
-    signalerEnvoi: 'Envoi...',
-    signalerMerci: 'Merci, votre signalement a été transmis.',
-    signalerErreur: 'Impossible d\'envoyer le signalement.',
-    comportement_inapproprie: 'Comportement inapproprié',
-    faux_profil: 'Faux profil / usurpation',
-    arnaque: 'Arnaque / fraude',
-    contenu_choquant: 'Contenu choquant',
-    autre: 'Autre',
-  },
-  ar: {
-    contacter: 'تواصل',
-    demanderPrestation: 'طلب خدمة',
-    services: 'الخدمات',
-    galerie: 'معرض الأعمال',
-    avis: 'التقييمات',
-    disponible: 'متاحة',
-    indisponible: 'غير متاحة',
-    tarif: 'السعر التقريبي',
-    verifie: 'ملف موثق',
-    retour: 'رجوع',
-    chargement: '...جاري التحميل',
-    introuvable: 'الملف غير موجود',
-    niveauConfiance: 'مستوى الثقة',
-    aucunService: 'لا توجد خدمات منشورة حالياً',
-    aucuneRealisation: 'لا توجد أعمال منشورة حالياً',
-    aucunAvis: 'لا توجد تقييمات حالياً',
-    aPartirDe: 'ابتداءً من',
-    DA: 'دج',
-    prendre_rdv: 'حجز موعد',
-    // Booking modal
-    demandePrestation: 'طلب خدمة',
-    choisirService: 'اختيار الخدمة',
-    datePreferee: 'التاريخ المفضل (اختياري)',
-    votreMess: 'رسالتك / تفاصيل',
-    messPlaceholder: 'صفي احتياجاتك...',
-    envoyer: 'إرسال الطلب',
-    annuler: 'إلغاء',
-    envoi: 'جاري الإرسال...',
-    demandeEnvoyee: 'تم إرسال الطلب!',
-    voirReservations: 'عرض حجوزاتي',
-    erreurReserv: 'تعذر إرسال الطلب. أعيدي المحاولة.',
-    selectionnerService: 'اختر خدمة',
-    // Signalement
-    signaler: 'إبلاغ',
-    signalerProfil: 'الإبلاغ عن هذا الملف',
-    raisonSignalement: 'سبب الإبلاغ',
-    raisonPlaceholder: 'صفي المشكلة...',
-    signalerBtn: 'إبلاغ',
-    signalerEnvoi: '...إرسال',
-    signalerMerci: 'شكراً، تم إرسال بلاغك.',
-    signalerErreur: 'تعذر إرسال البلاغ.',
-    comportement_inapproprie: 'سلوك غير لائق',
-    faux_profil: 'ملف مزيف / انتحال',
-    arnaque: 'احتيال / نصب',
-    contenu_choquant: 'محتوى مسيء',
-    autre: 'أخرى',
-  },
-}
+// ─── Palette ──────────────────────────────────────────────────────────────────
 
 const COLORS = {
-  prune: '#59364A',
+  prune:      '#59364A',
   terracotta: '#C77D69',
-  ivoire: '#FAF7F2',
-  sauge: '#A8B5A2',
+  ivoire:     '#FAF7F2',
+  sauge:      '#A8B5A2',
   anthracite: '#292929',
 }
 
+// ─── Composants utilitaires ───────────────────────────────────────────────────
+
 function Stars({ rating }: { rating: number }) {
   return (
-    <span style={{ color: '#F5A623', fontSize: 14 }}>
+    <span style={{ color: '#F59E0B', fontSize: 14 }}>
       {'★'.repeat(Math.round(rating))}{'☆'.repeat(5 - Math.round(rating))}
     </span>
   )
 }
 
-function formatPrix(min: number | null, max: number | null) {
-  if (!min && !max) return null
-  if (min && max) return `${min.toLocaleString()}–${max.toLocaleString()} DA`
-  if (min) return `À partir de ${min.toLocaleString()} DA`
-  return `Jusqu'à ${max!.toLocaleString()} DA`
-}
+// ─── Composant principal ──────────────────────────────────────────────────────
 
 export default function ProfilClient() {
   const params = useParams()
+  const id = params?.id as string | undefined
   const router = useRouter()
-  const id = params?.id as string
 
-  const [lang, setLang] = useState<Lang>('fr')
-  const [onglet, setOnglet] = useState<Onglet>('services')
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [services, setServices] = useState<Service[]>([])
+  // ── i18n ──────────────────────────────────────────────────────────────────
+  const { lang, setLang, tx, isRTL } = useTranslation()
+
+  // ── État ──────────────────────────────────────────────────────────────────
+  const [loading,         setLoading]         = useState(true)
+  const [notFound,        setNotFound]        = useState(false)
+  const [profile,         setProfile]         = useState<Profile | null>(null)
+  const [services,        setServices]        = useState<Service[]>([])
   const [portfolioImages, setPortfolioImages] = useState<PortfolioImage[]>([])
-  const [reviews, setReviews] = useState<Review[]>([])
-  const [avgRating, setAvgRating] = useState<number | null>(null)
-  const [selectedImage, setSelectedImage] = useState<PortfolioImage | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [notFound, setNotFound] = useState(false)
-  const [contactLoading, setContactLoading] = useState(false)
-
-  // Booking modal state
-  const [showBookingModal, setShowBookingModal] = useState(false)
-  const [bookingServiceId, setBookingServiceId] = useState('')
-  const [bookingDate, setBookingDate] = useState('')
-  const [bookingMessage, setBookingMessage] = useState('')
-  const [bookingLoading, setBookingLoading] = useState(false)
-  const [bookingSuccess, setBookingSuccess] = useState(false)
-  const [bookingError, setBookingError] = useState('')
-
-  // Signalement modal state
-  const [showSignalModal, setShowSignalModal] = useState(false)
-  const [signalReason, setSignalReason] = useState('')
-  const [signalDetails, setSignalDetails] = useState('')
-  const [signalLoading, setSignalLoading] = useState(false)
-  const [signalSuccess, setSignalSuccess] = useState(false)
-  const [signalError, setSignalError] = useState('')
-
-  // Favori state
-  const [isFavorite, setIsFavorite] = useState(false)
+  const [reviews,         setReviews]         = useState<Review[]>([])
+  const [avgRating,       setAvgRating]       = useState<number | null>(null)
+  const [onglet,          setOnglet]          = useState<Onglet>('services')
+  const [selectedImage,   setSelectedImage]   = useState<PortfolioImage | null>(null)
+  const [contactLoading,  setContactLoading]  = useState(false)
+  const [currentUserId,   setCurrentUserId]   = useState<string | null>(null)
+  const [isFavorite,      setIsFavorite]      = useState(false)
   const [favoriteLoading, setFavoriteLoading] = useState(false)
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
-  const tx = t[lang]
-  const isRTL = lang === 'ar'
+  // Réservation
+  const [showBookingModal,  setShowBookingModal]  = useState(false)
+  const [bookingServiceId,  setBookingServiceId]  = useState('')
+  const [bookingDate,       setBookingDate]       = useState('')
+  const [bookingMessage,    setBookingMessage]    = useState('')
+  const [bookingLoading,    setBookingLoading]    = useState(false)
+  const [bookingSuccess,    setBookingSuccess]    = useState(false)
+  const [bookingError,      setBookingError]      = useState('')
+
+  // Signalement
+  const [showSignalModal, setShowSignalModal] = useState(false)
+  const [signalReason,    setSignalReason]    = useState('')
+  const [signalDetails,   setSignalDetails]   = useState('')
+  const [signalLoading,   setSignalLoading]   = useState(false)
+  const [signalSuccess,   setSignalSuccess]   = useState(false)
+  const [signalError,     setSignalError]     = useState('')
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  /** Libellé d'un onglet traduit sans accès dynamique au Proxy */
+  const ongletLabel = useCallback((o: Onglet): string => {
+    if (o === 'services') return tx.profilPublic.services as string
+    if (o === 'galerie')  return tx.profilPublic.galerie as string
+    return tx.profilPublic.avis as string
+  }, [tx])
+
+  /** Format du prix, traduit selon la langue courante */
+  const formatPrix = useCallback((min: number | null | undefined, max: number | null | undefined): string | null => {
+    if (!min && !max) return null
+    const da  = tx.profilPublic.DA as string
+    const dep = tx.profilPublic.aPartirDe as string
+    const jus = tx.profilPublic.jusquA as string
+    if (min && max) return `${min.toLocaleString()}–${max.toLocaleString()} ${da}`
+    if (min)        return `${dep} ${min.toLocaleString()} ${da}`
+    return `${jus} ${max!.toLocaleString()} ${da}`
+  }, [tx])
+
+  // ── Actions ───────────────────────────────────────────────────────────────
 
   const handleContact = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/connexion'); return }
     if (!profile) return
     setContactLoading(true)
     try {
@@ -224,7 +144,7 @@ export default function ProfilClient() {
       if (error) throw error
       router.push('/messages?conv=' + data)
     } catch {
-      alert('Impossible d\'ouvrir la conversation. Réessayez.')
+      alert("Impossible d'ouvrir la conversation. Réessayez.")
     } finally {
       setContactLoading(false)
     }
@@ -243,7 +163,7 @@ export default function ProfilClient() {
 
   const handleBooking = async () => {
     if (!bookingServiceId) {
-      setBookingError(tx.selectionnerService)
+      setBookingError(tx.profilPublic.selectionnerService as string)
       return
     }
     setBookingLoading(true)
@@ -258,7 +178,7 @@ export default function ProfilClient() {
       setBookingSuccess(true)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err)
-      setBookingError(msg || tx.erreurReserv)
+      setBookingError(msg || (tx.profilPublic.erreurReserv as string))
     } finally {
       setBookingLoading(false)
     }
@@ -281,13 +201,14 @@ export default function ProfilClient() {
       if (error) throw error
       setSignalSuccess(true)
     } catch {
-      setSignalError(tx.signalerErreur)
+      setSignalError(tx.profilPublic.signalerErreur as string)
     } finally {
       setSignalLoading(false)
     }
   }
 
-  // ── Charger l'état favori dès que l'utilisatrice est connue ──────────────
+  // ── Favoris ───────────────────────────────────────────────────────────────
+
   const checkFavorite = useCallback(async (userId: string, providerId: string) => {
     const { data } = await supabase
       .from('favorites')
@@ -300,7 +221,6 @@ export default function ProfilClient() {
 
   const toggleFavorite = async () => {
     if (!id) return
-    // Non connectée → rediriger
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/connexion'); return }
 
@@ -315,6 +235,8 @@ export default function ProfilClient() {
       setFavoriteLoading(false)
     }
   }
+
+  // ── Chargement ────────────────────────────────────────────────────────────
 
   const fetchProfile = useCallback(async () => {
     if (!id) return
@@ -370,12 +292,10 @@ export default function ProfilClient() {
 
   useEffect(() => { fetchProfile() }, [fetchProfile])
 
-  // Vérifier le statut favori une fois l'utilisatrice et le profil connus
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user && id) {
         setCurrentUserId(data.user.id)
-        // Ne pas afficher le bouton favori sur son propre profil
         if (data.user.id !== id) {
           checkFavorite(data.user.id, id)
         }
@@ -383,11 +303,13 @@ export default function ProfilClient() {
     })
   }, [id, checkFavorite])
 
+  // ── États de chargement / erreur ──────────────────────────────────────────
+
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: COLORS.ivoire }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ width: 40, height: 40, border: `3px solid ${COLORS.prune}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
-        <p style={{ color: COLORS.prune, fontFamily: 'sans-serif' }}>{tx.chargement}</p>
+        <p style={{ color: COLORS.prune, fontFamily: 'sans-serif' }}>{tx.profilPublic.chargement as string}</p>
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
@@ -396,21 +318,23 @@ export default function ProfilClient() {
   if (notFound) return (
     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh', background: COLORS.ivoire, gap: 16 }}>
       <div style={{ fontSize: 48 }}>👤</div>
-      <p style={{ color: COLORS.anthracite, fontFamily: 'sans-serif', fontSize: 18 }}>{tx.introuvable}</p>
+      <p style={{ color: COLORS.anthracite, fontFamily: 'sans-serif', fontSize: 18 }}>{tx.profilPublic.introuvable as string}</p>
       <button onClick={() => router.back()} style={{ background: COLORS.prune, color: '#fff', border: 'none', borderRadius: 12, padding: '12px 24px', cursor: 'pointer', fontFamily: 'sans-serif' }}>
-        {tx.retour}
+        {tx.profilPublic.retour as string}
       </button>
     </div>
   )
 
   const trustBadge = profile!.trust_level >= 2
   const RAISONS = [
-    { key: 'comportement_inapproprie', label: tx.comportement_inapproprie },
-    { key: 'faux_profil',              label: tx.faux_profil },
-    { key: 'arnaque',                  label: tx.arnaque },
-    { key: 'contenu_choquant',         label: tx.contenu_choquant },
-    { key: 'autre',                    label: tx.autre },
+    { key: 'comportement_inapproprie', label: tx.profilPublic.comportement_inapproprie as string },
+    { key: 'faux_profil',              label: tx.profilPublic.faux_profil as string },
+    { key: 'arnaque',                  label: tx.profilPublic.arnaque as string },
+    { key: 'contenu_choquant',         label: tx.profilPublic.contenu_choquant as string },
+    { key: 'autre',                    label: tx.profilPublic.autre as string },
   ]
+
+  // ── Rendu ─────────────────────────────────────────────────────────────────
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} style={{ minHeight: '100vh', background: COLORS.ivoire, fontFamily: 'sans-serif', maxWidth: 480, margin: '0 auto', paddingBottom: 96 }}>
@@ -434,32 +358,32 @@ export default function ProfilClient() {
             {bookingSuccess ? (
               <div style={{ textAlign: 'center', padding: '20px 0' }}>
                 <div style={{ fontSize: 56 }}>✅</div>
-                <h3 style={{ color: COLORS.prune, margin: '12px 0 8px', fontSize: 20 }}>{tx.demandeEnvoyee}</h3>
+                <h3 style={{ color: COLORS.prune, margin: '12px 0 8px', fontSize: 20 }}>{tx.profilPublic.demandeEnvoyee as string}</h3>
                 <p style={{ color: '#666', fontSize: 14, marginBottom: 24 }}>
-                  {profile!.display_name} recevra votre demande et vous répondra rapidement.
+                  {profile!.display_name} {tx.profilPublic.repondraRapidement as string}
                 </p>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button
                     onClick={() => setShowBookingModal(false)}
                     style={{ flex: 1, padding: '13px', background: '#fff', border: `1.5px solid ${COLORS.prune}`, color: COLORS.prune, borderRadius: 12, fontWeight: 600, cursor: 'pointer' }}
                   >
-                    {tx.annuler}
+                    {tx.profilPublic.annuler as string}
                   </button>
                   <button
                     onClick={() => { setShowBookingModal(false); router.push('/reservations') }}
                     style={{ flex: 2, padding: '13px', background: COLORS.prune, color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer' }}
                   >
-                    {tx.voirReservations}
+                    {tx.profilPublic.voirReservations as string}
                   </button>
                 </div>
               </div>
             ) : (
               <>
-                <h2 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 700, color: COLORS.anthracite }}>{tx.demandePrestation}</h2>
+                <h2 style={{ margin: '0 0 20px', fontSize: 18, fontWeight: 700, color: COLORS.anthracite }}>{tx.profilPublic.demandePrestation as string}</h2>
 
                 {/* Sélection du service */}
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#555', marginBottom: 6 }}>{tx.choisirService} *</label>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#555', marginBottom: 6 }}>{tx.profilPublic.choisirService as string} *</label>
                   <select
                     value={bookingServiceId}
                     onChange={e => setBookingServiceId(e.target.value)}
@@ -470,7 +394,7 @@ export default function ProfilClient() {
                       appearance: 'none', cursor: 'pointer',
                     }}
                   >
-                    <option value="">{tx.selectionnerService}</option>
+                    <option value="">{tx.profilPublic.selectionnerService as string}</option>
                     {services.map(svc => (
                       <option key={svc.id} value={svc.id}>
                         {svc.title}{formatPrix(svc.price_min, svc.price_max) ? ` — ${formatPrix(svc.price_min, svc.price_max)}` : ''}
@@ -481,7 +405,7 @@ export default function ProfilClient() {
 
                 {/* Date préférée */}
                 <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#555', marginBottom: 6 }}>{tx.datePreferee}</label>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#555', marginBottom: 6 }}>{tx.profilPublic.datePreferee as string}</label>
                   <input
                     type="datetime-local"
                     value={bookingDate}
@@ -498,11 +422,11 @@ export default function ProfilClient() {
 
                 {/* Message */}
                 <div style={{ marginBottom: 20 }}>
-                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#555', marginBottom: 6 }}>{tx.votreMess}</label>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#555', marginBottom: 6 }}>{tx.profilPublic.votreMess as string}</label>
                   <textarea
                     value={bookingMessage}
                     onChange={e => setBookingMessage(e.target.value)}
-                    placeholder={tx.messPlaceholder}
+                    placeholder={tx.profilPublic.messPlaceholder as string}
                     maxLength={500}
                     rows={3}
                     style={{
@@ -527,7 +451,7 @@ export default function ProfilClient() {
                     onClick={() => setShowBookingModal(false)}
                     style={{ flex: 1, padding: '13px', background: '#fff', border: `1.5px solid #e0d8d0`, color: '#666', borderRadius: 12, fontWeight: 600, cursor: 'pointer' }}
                   >
-                    {tx.annuler}
+                    {tx.profilPublic.annuler as string}
                   </button>
                   <button
                     onClick={handleBooking}
@@ -540,7 +464,7 @@ export default function ProfilClient() {
                       fontSize: 15,
                     }}
                   >
-                    {bookingLoading ? tx.envoi : tx.envoyer}
+                    {bookingLoading ? tx.profilPublic.envoi as string : tx.profilPublic.envoyer as string}
                   </button>
                 </div>
               </>
@@ -567,15 +491,15 @@ export default function ProfilClient() {
             {signalSuccess ? (
               <div style={{ textAlign: 'center', padding: '20px 0' }}>
                 <div style={{ fontSize: 48 }}>🛡️</div>
-                <h3 style={{ color: COLORS.prune, margin: '12px 0 8px' }}>{tx.signalerMerci}</h3>
+                <h3 style={{ color: COLORS.prune, margin: '12px 0 8px' }}>{tx.profilPublic.signalerMerci as string}</h3>
                 <button onClick={() => setShowSignalModal(false)} style={{ marginTop: 16, padding: '12px 28px', background: COLORS.prune, color: '#fff', border: 'none', borderRadius: 12, fontWeight: 600, cursor: 'pointer' }}>
-                  Fermer
+                  {tx.profilPublic.fermer as string}
                 </button>
               </div>
             ) : (
               <>
-                <h2 style={{ margin: '0 0 16px', fontSize: 17, fontWeight: 700, color: '#DC2626' }}>🚩 {tx.signalerProfil}</h2>
-                <p style={{ fontSize: 13, color: '#555', marginBottom: 16 }}>{tx.raisonSignalement}</p>
+                <h2 style={{ margin: '0 0 16px', fontSize: 17, fontWeight: 700, color: '#DC2626' }}>🚩 {tx.profilPublic.signalerProfil as string}</h2>
+                <p style={{ fontSize: 13, color: '#555', marginBottom: 16 }}>{tx.profilPublic.raisonSignalement as string}</p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
                   {RAISONS.map(r => (
@@ -590,7 +514,7 @@ export default function ProfilClient() {
                   <textarea
                     value={signalDetails}
                     onChange={e => setSignalDetails(e.target.value)}
-                    placeholder={tx.raisonPlaceholder}
+                    placeholder={tx.profilPublic.raisonPlaceholder as string}
                     maxLength={500}
                     rows={3}
                     style={{
@@ -613,7 +537,7 @@ export default function ProfilClient() {
                     onClick={() => setShowSignalModal(false)}
                     style={{ flex: 1, padding: '13px', background: '#fff', border: '1.5px solid #e0d8d0', color: '#666', borderRadius: 12, fontWeight: 600, cursor: 'pointer' }}
                   >
-                    {tx.annuler}
+                    {tx.profilPublic.annuler as string}
                   </button>
                   <button
                     onClick={handleSignalement}
@@ -625,7 +549,7 @@ export default function ProfilClient() {
                       fontWeight: 700, cursor: !signalReason ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    {signalLoading ? tx.signalerEnvoi : `🚩 ${tx.signalerBtn}`}
+                    {signalLoading ? tx.profilPublic.signalerEnvoi as string : `🚩 ${tx.profilPublic.signalerBtn as string}`}
                   </button>
                 </div>
               </>
@@ -637,18 +561,18 @@ export default function ProfilClient() {
       {/* ── HEADER ────────────────────────────────────────────────────────── */}
       <div style={{ background: `linear-gradient(135deg, ${COLORS.prune} 0%, #7a4a63 100%)`, padding: '20px 20px 60px', position: 'relative' }}>
         <button onClick={() => router.back()} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 10, padding: '8px 14px', color: '#fff', cursor: 'pointer', fontSize: 14 }}>
-          ← {tx.retour}
+          ← {tx.profilPublic.retour as string}
         </button>
         <div style={{ position: 'absolute', top: 8, right: 16, display: 'flex', gap: 8 }}>
           {/* Signalement button — discret mais accessible */}
           <button
             onClick={() => { setSignalSuccess(false); setSignalError(''); setSignalReason(''); setSignalDetails(''); setShowSignalModal(true) }}
-            title={tx.signaler}
+            title={tx.profilPublic.signaler as string}
             style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, padding: '4px 10px', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 16 }}
           >
             🚩
           </button>
-          {(['fr', 'ar'] as Lang[]).map(l => (
+          {(['fr', 'ar'] as const).map(l => (
             <button key={l} onClick={() => setLang(l)} style={{ background: lang === l ? COLORS.terracotta : 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, padding: '4px 10px', color: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: lang === l ? 700 : 400 }}>
               {l.toUpperCase()}
             </button>
@@ -687,14 +611,14 @@ export default function ProfilClient() {
         )}
 
         <p style={{ color: '#888', fontSize: 14, margin: '4px 0' }}>
-          📍 {[profile!.commune, profile!.wilaya].filter(Boolean).join(', ') || 'Localisation non renseignée'}
+          📍 {[profile!.commune, profile!.wilaya].filter(Boolean).join(', ') || (tx.profilPublic.localisationNonRenseignee as string)}
         </p>
 
         {avgRating !== null && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, margin: '6px 0' }}>
             <Stars rating={avgRating} />
             <span style={{ fontSize: 14, color: '#555', fontWeight: 600 }}>{avgRating}/5</span>
-            <span style={{ fontSize: 13, color: '#999' }}>({reviews.length} avis)</span>
+            <span style={{ fontSize: 13, color: '#999' }}>({reviews.length} {tx.profilPublic.avis as string})</span>
           </div>
         )}
 
@@ -705,7 +629,7 @@ export default function ProfilClient() {
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', margin: '8px 0 16px' }}>
           {trustBadge && (
             <span style={{ background: `${COLORS.sauge}22`, color: COLORS.sauge, borderRadius: 20, padding: '4px 12px', fontSize: 12, fontWeight: 600 }}>
-              ✓ {tx.verifie}
+              ✓ {tx.profilPublic.verifie as string}
             </span>
           )}
           <span style={{ background: `${COLORS.prune}11`, color: COLORS.prune, borderRadius: 20, padding: '4px 12px', fontSize: 12 }}>
@@ -721,7 +645,10 @@ export default function ProfilClient() {
           <button
             onClick={toggleFavorite}
             disabled={favoriteLoading}
-            title={isFavorite ? (lang === 'ar' ? 'إزالة من المفضلة' : 'Retirer des favoris') : (lang === 'ar' ? 'Ajouter aux favoris' : 'Enregistrer')}
+            title={isFavorite
+              ? (tx.profilPublic.retirerFavoris as string)
+              : (tx.profilPublic.ajouterFavoris as string)
+            }
             style={{
               width: 48, height: 48,
               background: isFavorite ? `${COLORS.terracotta}18` : '#fff',
@@ -731,7 +658,10 @@ export default function ProfilClient() {
               flexShrink: 0, transition: 'all 0.2s ease',
               opacity: favoriteLoading ? 0.6 : 1,
             }}
-            aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            aria-label={isFavorite
+              ? (tx.profilPublic.retirerFavoris as string)
+              : (tx.profilPublic.ajouterFavoris as string)
+            }
             aria-pressed={isFavorite}
           >
             {favoriteLoading ? '…' : isFavorite ? '❤️' : '🤍'}
@@ -742,7 +672,7 @@ export default function ProfilClient() {
           disabled={contactLoading}
           style={{ flex: 1, background: '#fff', border: `1.5px solid ${COLORS.prune}`, color: COLORS.prune, borderRadius: 14, padding: '13px', fontWeight: 600, fontSize: 14, cursor: contactLoading ? 'not-allowed' : 'pointer', opacity: contactLoading ? 0.7 : 1 }}
         >
-          {contactLoading ? '…' : tx.contacter}
+          {contactLoading ? '…' : tx.profilPublic.contacter as string}
         </button>
         <button
           onClick={openBookingModal}
@@ -755,7 +685,7 @@ export default function ProfilClient() {
             cursor: services.length === 0 ? 'not-allowed' : 'pointer',
           }}
         >
-          {tx.demanderPrestation}
+          {tx.profilPublic.demanderPrestation as string}
         </button>
       </div>
 
@@ -769,7 +699,7 @@ export default function ProfilClient() {
             padding: '12px 0', fontWeight: onglet === o ? 700 : 400,
             fontSize: 14, cursor: 'pointer',
           }}>
-            {tx[o as keyof typeof tx]}
+            {ongletLabel(o)}
             {o === 'services' && services.length > 0 && (
               <span style={{ marginLeft: 4, background: COLORS.prune, color: '#fff', borderRadius: 10, padding: '1px 6px', fontSize: 11 }}>{services.length}</span>
             )}
@@ -791,7 +721,7 @@ export default function ProfilClient() {
           services.length === 0 ? (
             <div style={{ textAlign: 'center', color: '#bbb', paddingTop: 40 }}>
               <div style={{ fontSize: 40 }}>🛠️</div>
-              <p style={{ marginTop: 12 }}>{tx.aucunService}</p>
+              <p style={{ marginTop: 12 }}>{tx.profilPublic.aucunService as string}</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -812,13 +742,13 @@ export default function ProfilClient() {
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ color: COLORS.prune, fontWeight: 700, fontSize: 14 }}>
-                      {formatPrix(svc.price_min, svc.price_max) ?? 'Prix à définir'}
+                      {formatPrix(svc.price_min, svc.price_max) ?? (tx.profilPublic.prixADefinir as string)}
                     </span>
                     <button
                       onClick={() => { setBookingServiceId(svc.id); openBookingModal() }}
                       style={{ background: COLORS.prune, color: '#fff', border: 'none', borderRadius: 10, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
                     >
-                      {tx.prendre_rdv}
+                      {tx.profilPublic.prendre_rdv as string}
                     </button>
                   </div>
                 </div>
@@ -832,7 +762,7 @@ export default function ProfilClient() {
           portfolioImages.length === 0 ? (
             <div style={{ textAlign: 'center', color: '#bbb', paddingTop: 40 }}>
               <div style={{ fontSize: 40 }}>🖼️</div>
-              <p style={{ marginTop: 12 }}>{tx.aucuneRealisation}</p>
+              <p style={{ marginTop: 12 }}>{tx.profilPublic.aucuneRealisation as string}</p>
             </div>
           ) : (
             <>
@@ -844,7 +774,7 @@ export default function ProfilClient() {
                   <img src={selectedImage.url} alt={selectedImage.caption ?? ''} style={{ maxWidth: '100%', maxHeight: '80vh', borderRadius: 12, objectFit: 'contain' }} />
                   {selectedImage.caption && <p style={{ color: '#fff', marginTop: 12, fontSize: 14, textAlign: 'center' }}>{selectedImage.caption}</p>}
                   <button onClick={() => setSelectedImage(null)} style={{ marginTop: 16, background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: 10, padding: '8px 20px', cursor: 'pointer', fontSize: 14 }}>
-                    ✕ Fermer
+                    {tx.profilPublic.fermer as string}
                   </button>
                 </div>
               )}
@@ -864,7 +794,7 @@ export default function ProfilClient() {
           reviews.length === 0 ? (
             <div style={{ textAlign: 'center', color: '#bbb', paddingTop: 40 }}>
               <div style={{ fontSize: 40 }}>⭐</div>
-              <p style={{ marginTop: 12 }}>{tx.aucunAvis}</p>
+              <p style={{ marginTop: 12 }}>{tx.profilPublic.aucunAvis as string}</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -872,20 +802,22 @@ export default function ProfilClient() {
                 <div style={{ background: '#fff', borderRadius: 14, padding: 16, border: '1px solid #f0ebe4', textAlign: 'center', marginBottom: 4 }}>
                   <div style={{ fontSize: 40, fontWeight: 800, color: COLORS.prune }}>{avgRating}</div>
                   <Stars rating={avgRating} />
-                  <p style={{ margin: '6px 0 0', color: '#888', fontSize: 13 }}>{reviews.length} avis vérifiés</p>
+                  <p style={{ margin: '6px 0 0', color: '#888', fontSize: 13 }}>{reviews.length} {tx.profilPublic.avisVerifies as string}</p>
                 </div>
               )}
               {reviews.map(rev => (
                 <div key={rev.id} style={{ background: '#fff', borderRadius: 14, padding: 16, border: '1px solid #f0ebe4', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <span style={{ fontWeight: 700, fontSize: 14, color: COLORS.anthracite }}>{rev.reviewer?.display_name ?? 'Utilisatrice anonyme'}</span>
+                    <span style={{ fontWeight: 700, fontSize: 14, color: COLORS.anthracite }}>
+                      {rev.reviewer?.display_name ?? (tx.profilPublic.utilisatriceAnonyme as string)}
+                    </span>
                     <Stars rating={rev.rating} />
                   </div>
                   {rev.comment && <p style={{ margin: 0, color: '#555', fontSize: 14, lineHeight: 1.5 }}>{rev.comment}</p>}
                   <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
-                    {rev.punctuality != null && <span style={{ fontSize: 12, color: '#888' }}>⏱ Ponctualité {rev.punctuality}/5</span>}
-                    {rev.communication != null && <span style={{ fontSize: 12, color: '#888' }}>💬 Communication {rev.communication}/5</span>}
-                    {rev.quality != null && <span style={{ fontSize: 12, color: '#888' }}>✨ Qualité {rev.quality}/5</span>}
+                    {rev.punctuality  != null && <span style={{ fontSize: 12, color: '#888' }}>⏱ {tx.profilPublic.ponctualite as string} {rev.punctuality}/5</span>}
+                    {rev.communication != null && <span style={{ fontSize: 12, color: '#888' }}>💬 {tx.profilPublic.communication as string} {rev.communication}/5</span>}
+                    {rev.quality      != null && <span style={{ fontSize: 12, color: '#888' }}>✨ {tx.profilPublic.qualite as string} {rev.quality}/5</span>}
                   </div>
                   <p style={{ margin: '8px 0 0', color: '#bbb', fontSize: 12 }}>
                     {new Date(rev.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}

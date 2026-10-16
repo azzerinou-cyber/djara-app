@@ -1,103 +1,64 @@
 'use client'
 
 /**
- * /favoris
- *
- * Page des prestataires sauvegardées par l'utilisatrice connectée.
- * Données récupérées via la vue my_favorites (Supabase).
- * Bouton retirer : appelle toggle_favorite() côté serveur.
+ * DJARA — Page Mes favoris
+ * Affiche les prestataires sauvegardées par l'utilisatrice connectée.
+ * Utilise le hook centralisé useTranslation (i18n DJARA).
  */
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
+import { useTranslation, type Lang } from '@/i18n'
 import BottomNav from '@/components/BottomNav'
 
-type Lang = 'fr' | 'ar'
+const supabase = createClient()
+
+// ── Types ────────────────────────────────────────────────────────────────────
 
 interface Favori {
   favorite_id: string
-  favorited_at: string
   provider_id: string
+  favorited_at: string
   display_name: string | null
   avatar_url: string | null
   commune: string | null
   wilaya: string | null
-  bio: string | null
   trust_level: number
-  is_active: boolean
   avg_rating: number
   review_count: number
   first_service_title: string | null
-  first_service_category: string | null
   first_service_price: number | null
+  first_service_category: string | null
+  is_active: boolean
 }
 
-const t = {
-  fr: {
-    titre: 'Mes favoris',
-    sousTitre: 'Vos prestataires sauvegardées',
-    aucun: 'Aucun favori pour l\'instant',
-    aucunDetail: 'Enregistrez des prestataires depuis leur profil pour les retrouver facilement ici.',
-    explorer: 'Explorer les prestataires',
-    retirer: 'Retirer',
-    retrait: 'Retrait…',
-    voirProfil: 'Voir le profil',
-    avis: (n: number) => n === 0 ? 'Aucun avis' : n === 1 ? '1 avis' : `${n} avis`,
-    note: (n: number) => n > 0 ? `${n.toFixed(1)} ★` : '—',
-    depuis: 'depuis',
-    chargement: 'Chargement…',
-    erreur: 'Erreur de chargement',
-    reessayer: 'Réessayer',
-    ajouteLe: 'Ajouté le',
-    nonConnecte: 'Vous devez être connectée pour accéder à vos favoris.',
-    seConnecter: 'Se connecter',
-    profil: 'Profil',
-    inactif: 'Profil inactif',
-    connexion: 'Connexion',
-  },
-  ar: {
-    titre: 'المفضلة',
-    sousTitre: 'مقدمات الخدمات المحفوظات',
-    aucun: 'لا توجد مفضلة حتى الآن',
-    aucunDetail: 'احفظي مقدمات الخدمات من ملفاتهن للرجوع إليهن بسهولة.',
-    explorer: 'استكشاف مقدمات الخدمات',
-    retirer: 'إزالة',
-    retrait: '...إزالة',
-    voirProfil: 'عرض الملف',
-    avis: (n: number) => n === 0 ? 'لا تقييمات' : `${n} تقييم`,
-    note: (n: number) => n > 0 ? `${n.toFixed(1)} ★` : '—',
-    depuis: 'منذ',
-    chargement: '...جاري التحميل',
-    erreur: 'خطأ في التحميل',
-    reessayer: 'إعادة المحاولة',
-    ajouteLe: 'أُضيف في',
-    nonConnecte: 'يجب أن تكوني مسجلة الدخول للوصول إلى مفضلتك.',
-    seConnecter: 'تسجيل الدخول',
-    profil: 'الملف',
-    inactif: 'ملف غير نشط',
-    connexion: 'تسجيل الدخول',
-  },
-}
+// ── Palette ──────────────────────────────────────────────────────────────────
 
 const COLORS = {
-  prune: '#59364A',
+  prune:      '#59364A',
   terracotta: '#C77D69',
-  ivoire: '#FAF7F2',
-  sauge: '#A8B5A2',
+  ivoire:     '#FAF7F2',
+  sauge:      '#A8B5A2',
   anthracite: '#292929',
 }
 
 const CATEGORIES_EMOJI: Record<string, string> = {
-  maison: '🏠',
-  beaute: '💄',
-  education: '📚',
-  creation: '🎨',
-  digital: '💻',
+  maison:     '🏠',
+  beaute:     '💄',
+  education:  '📚',
+  creation:   '🎨',
+  digital:    '💻',
   evenements: '🎉',
 }
 
-function Avatar({ name, avatarUrl, size = 56 }: { name: string | null; avatarUrl: string | null; size?: number }) {
+// ── Composants utilitaires ────────────────────────────────────────────────────
+
+function Avatar({ name, avatarUrl, size = 56 }: {
+  name: string | null
+  avatarUrl: string | null
+  size?: number
+}) {
   const initials = name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) ?? '?'
   if (avatarUrl) {
     return (
@@ -140,26 +101,36 @@ function formatDate(iso: string, lang: Lang): string {
   }
 }
 
+// ── Page principale ───────────────────────────────────────────────────────────
+
 export default function FavorisPage() {
   const router = useRouter()
-  const [lang, setLang] = useState<Lang>('fr')
+  const { lang, setLang, tx, isRTL } = useTranslation()
+  const dir = isRTL ? 'rtl' : 'ltr'
+
   const [favoris, setFavoris] = useState<Favori[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [retirant, setRetirant] = useState<string | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
 
-  const tx = t[lang]
-  const isRTL = lang === 'ar'
+  // Helpers dépendant de la langue (fonctions non traduisibles directement)
+  const formatAvis = (n: number): string => {
+    if (lang === 'ar') return n === 0 ? 'لا تقييمات' : `${n} تقييم`
+    return n === 0 ? 'Aucun avis' : n === 1 ? '1 avis' : `${n} avis`
+  }
 
-  // ── Vérifier l'auth ─────────────────────────────────────────────────────────
+  const formatNote = (n: number): string =>
+    n > 0 ? `${n.toFixed(1)} ★` : '—'
+
+  // ── Vérifier l'auth ──────────────────────────────────────────────────────
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setIsAuthenticated(!!data.user)
     })
   }, [])
 
-  // ── Charger les favoris ──────────────────────────────────────────────────────
+  // ── Charger les favoris ──────────────────────────────────────────────────
   const charger = async () => {
     setLoading(true)
     setError('')
@@ -172,7 +143,7 @@ export default function FavorisPage() {
       setFavoris(data ?? [])
     } catch (e: unknown) {
       console.error('[favoris]', e)
-      setError(tx.erreur)
+      setError(tx.favoris.erreur)
     } finally {
       setLoading(false)
     }
@@ -184,9 +155,10 @@ export default function FavorisPage() {
     } else if (isAuthenticated === false) {
       setLoading(false)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated])
 
-  // ── Retirer un favori ────────────────────────────────────────────────────────
+  // ── Retirer un favori ────────────────────────────────────────────────────
   const retirer = async (favoriteId: string, providerId: string) => {
     setRetirant(favoriteId)
     try {
@@ -205,7 +177,7 @@ export default function FavorisPage() {
 
   return (
     <div
-      dir={isRTL ? 'rtl' : 'ltr'}
+      dir={dir}
       style={{
         minHeight: '100vh',
         background: COLORS.ivoire,
@@ -213,7 +185,7 @@ export default function FavorisPage() {
         paddingBottom: 100,
       }}
     >
-      {/* ── HEADER ────────────────────────────────────────────────────── */}
+      {/* ── HEADER ─────────────────────────────────────────────────────── */}
       <div style={{
         background: `linear-gradient(135deg, ${COLORS.prune} 0%, #7a4a63 100%)`,
         padding: '52px 20px 28px',
@@ -223,7 +195,7 @@ export default function FavorisPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: '#fff' }}>
-                ❤️ {tx.titre}
+                ❤️ {tx.favoris.titre}
               </h1>
               {!loading && favoris.length > 0 && (
                 <p style={{ margin: '4px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>
@@ -231,6 +203,7 @@ export default function FavorisPage() {
                 </p>
               )}
             </div>
+
             {/* Toggle langue */}
             <div style={{ display: 'flex', gap: 6 }}>
               {(['fr', 'ar'] as Lang[]).map(l => (
@@ -254,14 +227,16 @@ export default function FavorisPage() {
 
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px' }}>
 
-        {/* ── NON CONNECTÉE ──────────────────────────────────────────── */}
+        {/* ── NON CONNECTÉE ───────────────────────────────────────────── */}
         {isAuthenticated === false && (
           <div style={{
             background: '#fff', borderRadius: 20, padding: '48px 24px',
             textAlign: 'center', boxShadow: '0 2px 16px rgba(89,54,74,0.08)',
           }}>
             <div style={{ fontSize: 56, marginBottom: 16 }}>🔒</div>
-            <p style={{ fontSize: 15, color: '#555', marginBottom: 24 }}>{tx.nonConnecte}</p>
+            <p style={{ fontSize: 15, color: '#555', marginBottom: 24 }}>
+              {tx.favoris.nonConnecte}
+            </p>
             <button
               onClick={() => router.push('/connexion')}
               style={{
@@ -271,20 +246,20 @@ export default function FavorisPage() {
                 fontSize: 15, fontWeight: 700, cursor: 'pointer',
               }}
             >
-              {tx.seConnecter}
+              {tx.favoris.seConnecter}
             </button>
           </div>
         )}
 
-        {/* ── CHARGEMENT ─────────────────────────────────────────────── */}
+        {/* ── CHARGEMENT ──────────────────────────────────────────────── */}
         {loading && (
           <div style={{ textAlign: 'center', padding: '64px 0', color: '#999' }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
-            <p>{tx.chargement}</p>
+            <p>{tx.favoris.chargement}</p>
           </div>
         )}
 
-        {/* ── ERREUR ─────────────────────────────────────────────────── */}
+        {/* ── ERREUR ──────────────────────────────────────────────────── */}
         {!loading && error && (
           <div style={{
             background: '#FEF2F2', borderRadius: 16, padding: '24px',
@@ -299,12 +274,12 @@ export default function FavorisPage() {
                 fontSize: 14, cursor: 'pointer',
               }}
             >
-              {tx.reessayer}
+              {tx.favoris.reessayer}
             </button>
           </div>
         )}
 
-        {/* ── LISTE VIDE ──────────────────────────────────────────────── */}
+        {/* ── LISTE VIDE ───────────────────────────────────────────────── */}
         {!loading && !error && isAuthenticated && favoris.length === 0 && (
           <div style={{
             background: '#fff', borderRadius: 20, padding: '48px 24px',
@@ -312,10 +287,10 @@ export default function FavorisPage() {
           }}>
             <div style={{ fontSize: 64, marginBottom: 16 }}>🤍</div>
             <h2 style={{ fontSize: 18, fontWeight: 700, color: COLORS.anthracite, marginBottom: 10 }}>
-              {tx.aucun}
+              {tx.favoris.aucun}
             </h2>
             <p style={{ fontSize: 14, color: '#777', lineHeight: 1.6, marginBottom: 28 }}>
-              {tx.aucunDetail}
+              {tx.favoris.aucunDetail}
             </p>
             <button
               onClick={() => router.push('/rechercher')}
@@ -326,12 +301,12 @@ export default function FavorisPage() {
                 fontSize: 15, fontWeight: 700, cursor: 'pointer',
               }}
             >
-              {tx.explorer}
+              {tx.favoris.explorer}
             </button>
           </div>
         )}
 
-        {/* ── LISTE DES FAVORIS ───────────────────────────────────────── */}
+        {/* ── LISTE DES FAVORIS ────────────────────────────────────────── */}
         {!loading && !error && favoris.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {favoris.map(fav => (
@@ -350,11 +325,14 @@ export default function FavorisPage() {
                 {/* Badge inactif */}
                 {!fav.is_active && (
                   <div style={{
-                    position: 'absolute', top: 12, right: isRTL ? 'auto' : 12, left: isRTL ? 12 : 'auto',
+                    position: 'absolute',
+                    top: 12,
+                    right: isRTL ? 'auto' : 12,
+                    left: isRTL ? 12 : 'auto',
                     background: '#F3F4F6', borderRadius: 8, padding: '3px 8px',
                     fontSize: 10, color: '#6B7280', fontWeight: 600,
                   }}>
-                    {tx.inactif}
+                    {tx.favoris.inactif}
                   </div>
                 )}
 
@@ -378,11 +356,11 @@ export default function FavorisPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
                       {fav.avg_rating > 0 && (
                         <span style={{ fontSize: 13, color: '#F59E0B', fontWeight: 600 }}>
-                          {tx.note(fav.avg_rating)}
+                          {formatNote(fav.avg_rating)}
                         </span>
                       )}
                       <span style={{ fontSize: 12, color: '#9CA3AF' }}>
-                        {tx.avis(fav.review_count)}
+                        {formatAvis(fav.review_count)}
                       </span>
                     </div>
 
@@ -397,7 +375,11 @@ export default function FavorisPage() {
                         <span>{CATEGORIES_EMOJI[fav.first_service_category ?? ''] ?? '🛠️'}</span>
                         <span style={{ fontWeight: 500 }}>{fav.first_service_title}</span>
                         {fav.first_service_price && (
-                          <span style={{ marginLeft: 'auto', fontSize: 12, color: COLORS.terracotta, fontWeight: 700 }}>
+                          <span style={{
+                            marginLeft: isRTL ? 0 : 'auto',
+                            marginRight: isRTL ? 'auto' : 0,
+                            fontSize: 12, color: COLORS.terracotta, fontWeight: 700,
+                          }}>
                             {fav.first_service_price.toLocaleString()} DA
                           </span>
                         )}
@@ -411,7 +393,7 @@ export default function FavorisPage() {
                   margin: '12px 0 0', fontSize: 11, color: '#D1D5DB',
                   textAlign: isRTL ? 'left' : 'right',
                 }}>
-                  {tx.ajouteLe} {formatDate(fav.favorited_at, lang)}
+                  {tx.favoris.ajouteLe} {formatDate(fav.favorited_at, lang)}
                 </p>
 
                 {/* Boutons action */}
@@ -425,7 +407,7 @@ export default function FavorisPage() {
                       fontSize: 13, fontWeight: 700, cursor: 'pointer',
                     }}
                   >
-                    {tx.voirProfil}
+                    {tx.favoris.voirProfil}
                   </button>
                   <button
                     onClick={() => retirer(fav.favorite_id, fav.provider_id)}
@@ -439,7 +421,7 @@ export default function FavorisPage() {
                       cursor: retirant === fav.favorite_id ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    {retirant === fav.favorite_id ? tx.retrait : `🗑 ${tx.retirer}`}
+                    {retirant === fav.favorite_id ? tx.favoris.retrait : `🗑 ${tx.favoris.retirer}`}
                   </button>
                 </div>
               </div>
