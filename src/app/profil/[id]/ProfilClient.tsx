@@ -206,6 +206,11 @@ export default function ProfilClient() {
   const [signalSuccess, setSignalSuccess] = useState(false)
   const [signalError, setSignalError] = useState('')
 
+  // Favori state
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [favoriteLoading, setFavoriteLoading] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+
   const tx = t[lang]
   const isRTL = lang === 'ar'
 
@@ -282,6 +287,35 @@ export default function ProfilClient() {
     }
   }
 
+  // ── Charger l'état favori dès que l'utilisatrice est connue ──────────────
+  const checkFavorite = useCallback(async (userId: string, providerId: string) => {
+    const { data } = await supabase
+      .from('favorites')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('provider_id', providerId)
+      .maybeSingle()
+    setIsFavorite(!!data)
+  }, [])
+
+  const toggleFavorite = async () => {
+    if (!id) return
+    // Non connectée → rediriger
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push('/connexion'); return }
+
+    setFavoriteLoading(true)
+    try {
+      const { data: added, error } = await supabase.rpc('toggle_favorite', { p_provider_id: id })
+      if (error) throw error
+      setIsFavorite(added === true)
+    } catch (err: unknown) {
+      console.error('[toggle_favorite]', err)
+    } finally {
+      setFavoriteLoading(false)
+    }
+  }
+
   const fetchProfile = useCallback(async () => {
     if (!id) return
     setLoading(true)
@@ -335,6 +369,19 @@ export default function ProfilClient() {
   }, [id])
 
   useEffect(() => { fetchProfile() }, [fetchProfile])
+
+  // Vérifier le statut favori une fois l'utilisatrice et le profil connus
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user && id) {
+        setCurrentUserId(data.user.id)
+        // Ne pas afficher le bouton favori sur son propre profil
+        if (data.user.id !== id) {
+          checkFavorite(data.user.id, id)
+        }
+      }
+    })
+  }, [id, checkFavorite])
 
   if (loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: COLORS.ivoire }}>
@@ -669,6 +716,27 @@ export default function ProfilClient() {
 
       {/* ── CTA ───────────────────────────────────────────────────────────── */}
       <div style={{ padding: '0 20px 20px', display: 'flex', gap: 10 }}>
+        {/* Bouton favori — masqué sur son propre profil */}
+        {currentUserId !== id && (
+          <button
+            onClick={toggleFavorite}
+            disabled={favoriteLoading}
+            title={isFavorite ? (lang === 'ar' ? 'إزالة من المفضلة' : 'Retirer des favoris') : (lang === 'ar' ? 'Ajouter aux favoris' : 'Enregistrer')}
+            style={{
+              width: 48, height: 48,
+              background: isFavorite ? `${COLORS.terracotta}18` : '#fff',
+              border: `1.5px solid ${isFavorite ? COLORS.terracotta : '#e0d8d0'}`,
+              borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 20, cursor: favoriteLoading ? 'not-allowed' : 'pointer',
+              flexShrink: 0, transition: 'all 0.2s ease',
+              opacity: favoriteLoading ? 0.6 : 1,
+            }}
+            aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+            aria-pressed={isFavorite}
+          >
+            {favoriteLoading ? '…' : isFavorite ? '❤️' : '🤍'}
+          </button>
+        )}
         <button
           onClick={handleContact}
           disabled={contactLoading}
