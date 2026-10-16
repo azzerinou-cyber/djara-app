@@ -40,6 +40,9 @@ export default function MonProfilPage() {
   const [avgRating, setAvgRating] = useState<number | null>(null);
   const [dataLoading, setDataLoading] = useState(false);
   const [signOutLoading, setSignOutLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   // Redirection si non connectée
   useEffect(() => {
@@ -93,6 +96,24 @@ export default function MonProfilPage() {
     Promise.all([fetchServices(), fetchReviews()]).finally(() => setDataLoading(false));
   }, [user, authLoading, fetchServices, fetchReviews]);
 
+  const handleDeleteAccount = async () => {
+    setDeleteLoading(true);
+    try {
+      const res = await fetch('/api/account/delete', { method: 'DELETE' });
+      if (res.ok) {
+        router.replace('/');
+      } else {
+        const body = await res.json().catch(() => ({}));
+        alert(body.error ?? 'Impossible de supprimer le compte. Veuillez réessayer.');
+      }
+    } catch {
+      alert('Une erreur réseau est survenue. Veuillez réessayer.');
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteModal(false);
+    }
+  };
+
   const handleSignOut = async () => {
     setSignOutLoading(true);
     await signOut();
@@ -134,6 +155,12 @@ export default function MonProfilPage() {
       suppressionCompte: 'Supprimer mon compte',
       politiqueConf: 'Politique de confidentialité',
       cgv: "Conditions d'utilisation",
+      suppressionConfirmWord: 'SUPPRIMER',
+      suppressionConfirmLabel: 'Pour confirmer, saisissez exactement : SUPPRIMER',
+      suppressionWarning: 'Cette action est irréversible. Votre compte, vos services, vos messages et votre historique seront définitivement supprimés, conformément à la loi 18-07.',
+      suppressionBtn: 'Supprimer définitivement',
+      suppressionLoading: 'Suppression en cours...',
+      annuler: 'Annuler',
       verifierIdentite: 'Vérifier mon identité',
       verifierTel: 'Téléphone vérifié ✓',
       bio: 'À propos de moi',
@@ -177,6 +204,12 @@ export default function MonProfilPage() {
       suppressionCompte: 'حذف حسابي',
       politiqueConf: 'سياسة الخصوصية',
       cgv: 'شروط الاستخدام',
+      suppressionConfirmWord: 'حذف',
+      suppressionConfirmLabel: 'للتأكيد، اكتبي بالضبط: حذف',
+      suppressionWarning: 'هذا الإجراء لا يمكن التراجع عنه. سيتم حذف حسابك وخدماتك ورسائلك وسجلك نهائيًا وفقًا للقانون 18-07.',
+      suppressionBtn: 'حذف نهائي',
+      suppressionLoading: '...جاري الحذف',
+      annuler: 'إلغاء',
       verifierIdentite: 'التحقق من هويتي',
       verifierTel: 'الهاتف موثق ✓',
       bio: 'نبذة عني',
@@ -562,13 +595,16 @@ export default function MonProfilPage() {
               <span style={{ color: '#bbb' }}>›</span>
             </button>
 
-            <div style={{ background: '#fff3f3', borderRadius: 14, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', border: '1px solid #ffcccc' }}>
+            <button
+              onClick={() => { setDeleteConfirmText(''); setShowDeleteModal(true); }}
+              style={{ background: '#fff3f3', borderRadius: 14, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', border: '1px solid #ffcccc', width: '100%' }}
+            >
               <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                 <span style={{ fontSize: 18 }}>🗑</span>
-                <span style={{ color: '#e53935', fontSize: 13 }}>{t.suppressionCompte}</span>
+                <span style={{ color: '#e53935', fontSize: 13, fontWeight: 600 }}>{t.suppressionCompte}</span>
               </div>
               <span style={{ color: '#bbb' }}>›</span>
-            </div>
+            </button>
 
             <div style={{ textAlign: 'center', marginTop: 16, color: '#bbb', fontSize: 11 }}>
               DJARA v1.0.0 — {lang === 'fr' ? 'Le talent des femmes, tout près de vous' : 'موهبة المرأة، قريبة منك'}
@@ -578,6 +614,62 @@ export default function MonProfilPage() {
       </div>
 
       <BottomNav lang={lang} />
+
+      {/* Modal de confirmation de suppression de compte */}
+      {showDeleteModal && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowDeleteModal(false); }}
+        >
+          <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', padding: '24px 20px 36px', width: '100%', maxWidth: 480 }}>
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <div style={{ fontSize: 40, marginBottom: 8 }}>⚠️</div>
+              <h2 style={{ color: '#292929', fontSize: 18, fontWeight: 700, margin: 0 }}>
+                {t.suppressionCompte}
+              </h2>
+            </div>
+
+            <div style={{ background: '#fff3f3', borderRadius: 12, padding: 14, marginBottom: 20, border: '1px solid #ffcccc' }}>
+              <p style={{ color: '#e53935', fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+                {t.suppressionWarning}
+              </p>
+            </div>
+
+            <p style={{ color: '#666', fontSize: 13, marginBottom: 10 }}>
+              {t.suppressionConfirmLabel}
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder={t.suppressionConfirmWord}
+              style={{ width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid #ddd', fontSize: 14, marginBottom: 16, boxSizing: 'border-box', direction: isRTL ? 'rtl' : 'ltr' }}
+            />
+
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deleteLoading || deleteConfirmText !== t.suppressionConfirmWord}
+              style={{
+                width: '100%', padding: '14px', borderRadius: 12, border: 'none',
+                background: deleteLoading || deleteConfirmText !== t.suppressionConfirmWord ? '#ccc' : '#e53935',
+                color: '#fff', fontWeight: 700, fontSize: 15,
+                cursor: deleteLoading || deleteConfirmText !== t.suppressionConfirmWord ? 'not-allowed' : 'pointer',
+                marginBottom: 10
+              }}
+            >
+              {deleteLoading ? t.suppressionLoading : t.suppressionBtn}
+            </button>
+
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              disabled={deleteLoading}
+              style={{ width: '100%', padding: '13px', borderRadius: 12, border: '1.5px solid #ddd', background: '#fff', color: '#666', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
+            >
+              {t.annuler}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
